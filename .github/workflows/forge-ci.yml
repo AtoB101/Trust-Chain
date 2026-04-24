@@ -1,0 +1,68 @@
+name: Forge CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  quick-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Show tool versions
+        run: |
+          forge --version
+          cast --version
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Build
+        run: forge build
+
+      - name: Run fast unit/integration tests
+        run: forge test -vv
+
+  full-check:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Build
+        run: forge build
+
+      - name: Run all tests
+        run: forge test -vv
+
+      - name: Run scenario demo test
+        run: forge test --match-path "contracts/test/ScenarioFlow.t.sol" -vv
+
+      - name: Run accounting invariants
+        run: forge test --match-path "contracts/test/CrossModuleAccounting.invariant.t.sol" -vv
+
+      - name: Run state-machine invariants
+        run: forge test --match-path "contracts/test/BillStateMachine.invariant.t.sol" -vv
