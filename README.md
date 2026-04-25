@@ -1,12 +1,30 @@
-# TrustChain Contracts Skeleton
+# TrustChain Settlement Core (MVP Focus)
 
-This repository contains a first-pass Solidity skeleton for the TrustChain protocol:
+TrustChain focuses on one core capability:
 
-- KYA identity registry
-- lock pool and mapping-balance manager
-- auth token manager
-- bill + batch settlement manager
-- circuit breaker controls
+> **Off-chain AI agent intent (EIP-712 signed) -> on-chain verifiable settlement**
+
+This repo is intentionally centered on proving that core flow end-to-end:
+
+1. Off-chain actor signs typed intent.
+2. Contract verifies signer, amount, nonce/replay, and deadline.
+3. Escrowed funds settle to recipient with deterministic accounting.
+
+For roadmap and scope discipline, see: `docs/FOCUS_ROADMAP.md`
+
+## Current Module Posture
+
+Primary (V1 first-class):
+
+- auth verification (`AuthTokenManager`, `EIP712Auth`)
+- settlement lifecycle (`BillManager`)
+- escrow accounting + payout (`LockPoolManager`)
+- minimal emergency stop (`CircuitBreaker`)
+
+Secondary/deferred in narrative:
+
+- richer identity/policy expansion (`KYARegistry` beyond minimal checks)
+- broader feature combinations not required for signature-to-settlement proof
 
 ## Prerequisites
 
@@ -39,6 +57,12 @@ forge build
 
 ## Test
 
+Run core narrative demo first (recommended):
+
+```bash
+forge test --match-path "contracts/test/ScenarioFlow.t.sol" -vv
+```
+
 Run all tests:
 
 ```bash
@@ -51,12 +75,6 @@ Run a single test file:
 forge test --match-path "contracts/test/KYARegistry.t.sol" -vv
 ```
 
-Run demo scenario (end-to-end flow):
-
-```bash
-forge test --match-path "contracts/test/ScenarioFlow.t.sol" -vv
-```
-
 Run invariant/fuzz tests:
 
 ```bash
@@ -67,7 +85,6 @@ forge test --match-path "contracts/test/BillStateMachine.invariant.t.sol" -vv
 
 ## Notes
 
-- Current contracts are a protocol skeleton and intentionally keep business logic minimal.
-- Tests cover deployment, basic happy paths, and selected revert paths.
-- Next iteration should tighten invariants for pool accounting, auth signatures (full EIP-712), and settlement safety.
-- `BatchSettlement` is kept only as a deprecated compatibility wrapper; call `BillManager` directly for `closeBatch/settleBatch`.
+- Demo-first message: prove signed-intent settlement correctness before adding breadth.
+- Keep decisions tied to settlement reliability and integration simplicity.
+- `BatchSettlement` is a deprecated compatibility wrapper; use `BillManager` directly.
