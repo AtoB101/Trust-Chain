@@ -71,3 +71,25 @@ It also writes a JSON report to `OUTPUT_PATH` (default: `results/v01-batch-resul
 - success rate >= 95%
 - no replay/nonce failures in normal run
 - `TokenTransferFailed` should be 0 if balance/allowance are pre-checked
+
+## Aggregate multiple runs (weekly report)
+
+Use:
+
+```bash
+npx tsx scripts/aggregate-results.ts
+```
+
+Optional env:
+
+```bash
+RESULTS_DIR=results
+AGGREGATE_OUTPUT=results/aggregate-summary.json
+```
+
+This generates:
+
+- total attempted/succeeded/failed
+- overall success rate across all runs
+- merged failure reason distribution
+- per-run summary table in JSON

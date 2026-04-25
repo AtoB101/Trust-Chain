@@ -98,3 +98,4 @@ Batch validation (50-100 settlements):
 
 - script: `examples/v01-batch-settlement.ts`
 - guide: `docs/V0_1_BATCH_TEST.md`
+- aggregate tool: `scripts/aggregate-results.ts`
