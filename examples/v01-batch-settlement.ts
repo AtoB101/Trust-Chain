@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { writeFileSync } from "node:fs";
 import { Contract, JsonRpcProvider, Wallet, keccak256, Signature, toUtf8Bytes } from "ethers";
 
 type Quote = {
@@ -51,6 +52,7 @@ async function main() {
   const maxAmount = BigInt(process.env.MAX_AMOUNT ?? "200");
   const delayMs = Number(process.env.DELAY_MS ?? "300");
   const deadlineSeconds = Number(process.env.DEADLINE_SECONDS ?? "3600");
+  const outputPath = process.env.OUTPUT_PATH ?? "results/v01-batch-results.json";
   const now = Math.floor(Date.now() / 1000);
 
   if (batchSize < 1 || batchSize > 1000) throw new Error("BATCH_SIZE must be in [1, 1000]");
@@ -144,6 +146,33 @@ async function main() {
   console.log(`successRate: ${successRate.toFixed(2)}%`);
   console.log("failureReasons:", Object.fromEntries(stats.failureReasons.entries()));
   console.log("sampleTxHashes:", stats.txHashes.slice(0, 5));
+
+  const resultPayload = {
+    timestamp: new Date().toISOString(),
+    config: {
+      engineAddress,
+      tokenAddress,
+      payeeAddress,
+      batchSize,
+      minAmount: minAmount.toString(),
+      maxAmount: maxAmount.toString(),
+      delayMs,
+      deadlineSeconds,
+      chainId: domain.chainId,
+    },
+    summary: {
+      attempted: stats.attempted,
+      sent: stats.sent,
+      succeeded: stats.succeeded,
+      failed: stats.failed,
+      successRate: Number(successRate.toFixed(2)),
+    },
+    failureReasons: Object.fromEntries(stats.failureReasons.entries()),
+    txHashes: stats.txHashes,
+  };
+
+  writeFileSync(outputPath, JSON.stringify(resultPayload, null, 2), "utf-8");
+  console.log(`results written to: ${outputPath}`);
 }
 
 main().catch((error) => {

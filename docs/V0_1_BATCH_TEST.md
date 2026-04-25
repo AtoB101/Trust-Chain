@@ -37,6 +37,7 @@ MIN_AMOUNT=100
 MAX_AMOUNT=200
 DELAY_MS=300
 DEADLINE_SECONDS=3600
+OUTPUT_PATH=results/v01-batch-results.json
 ```
 
 ## Run 50 settlements
@@ -62,6 +63,8 @@ The script prints:
 - successRate
 - failureReasons (grouped by known contract errors)
 - sample tx hashes
+
+It also writes a JSON report to `OUTPUT_PATH` (default: `results/v01-batch-results.json`).
 
 ## Recommended acceptance target
 
