@@ -11,6 +11,9 @@ This repo is intentionally centered on proving that core flow end-to-end:
 3. Escrowed funds settle to recipient with deterministic accounting.
 
 For roadmap and scope discipline, see: `docs/FOCUS_ROADMAP.md`
+Open-source and token design planning docs:
+- `docs/OPEN_SOURCE_LAUNCH_CHECKLIST.md`
+- `docs/TOKENOMICS_V0_DRAFT.md`
 
 ## Security Verification Matrix (Latest Audit Baseline)
 
