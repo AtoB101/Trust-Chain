@@ -19,6 +19,10 @@ contract NonCustodialAgentPaymentTest is Test {
     address internal buyer;
     address internal seller;
     address internal arbitrator;
+    bytes32 internal constant EIP712_DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    bytes32 internal constant CONFIRM_BILL_TYPEHASH =
+        keccak256("ConfirmBill(uint256 billId,uint256 nonce,uint256 deadline,address relayer)");
 
     function setUp() public {
         buyer = vm.addr(buyerPk);
@@ -171,6 +175,38 @@ contract NonCustodialAgentPaymentTest is Test {
         assertEq(batchAfter.totalPending, 0);
     }
 
+    function testSettleBatchProgressesWithSmallMaxBills() public {
+        vm.startPrank(buyer);
+        uint256 bill1 =
+            protocol.createBill(seller, address(token), 1_000, keccak256("scope-p1"), "ipfs://proof-p1", block.timestamp + 1 days);
+        uint256 bill2 =
+            protocol.createBill(seller, address(token), 1_000, keccak256("scope-p2"), "ipfs://proof-p2", block.timestamp + 1 days);
+        uint256 bill3 =
+            protocol.createBill(seller, address(token), 1_000, keccak256("scope-p3"), "ipfs://proof-p3", block.timestamp + 1 days);
+        protocol.confirmBill(bill1);
+        protocol.confirmBill(bill2);
+        protocol.confirmBill(bill3);
+        vm.stopPrank();
+
+        uint256 sellerBefore = token.balanceOf(seller);
+        uint256 batchId = protocol.getBill(bill1).batchId;
+
+        vm.prank(buyer);
+        protocol.closeBatch(batchId);
+
+        vm.prank(buyer);
+        (uint256 c1, uint256 a1) = protocol.settleBatch(batchId, 1);
+        vm.prank(buyer);
+        (uint256 c2, uint256 a2) = protocol.settleBatch(batchId, 1);
+        vm.prank(buyer);
+        (uint256 c3, uint256 a3) = protocol.settleBatch(batchId, 1);
+
+        assertEq(c1 + c2 + c3, 3);
+        assertEq(a1 + a2 + a3, 3_000);
+        assertEq(token.balanceOf(seller) - sellerBefore, 3_000);
+        assertEq(uint8(protocol.getBatch(batchId).status), uint8(INonCustodialAgentPayment.BatchStatus.Settled));
+    }
+
     function testCloseBatchRevertsWithBatchNotFound() public {
         vm.prank(buyer);
         vm.expectRevert(NonCustodialAgentPayment.BatchNotFound.selector);
@@ -186,7 +222,14 @@ contract NonCustodialAgentPaymentTest is Test {
         INonCustodialAgentPayment.Bill memory bill = protocol.getBill(billId);
 
         vm.prank(buyer);
-        vm.expectRevert(NonCustodialAgentPayment.BatchNotClosed.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NonCustodialAgentPayment.InvalidBatchStatus.selector,
+                bill.batchId,
+                INonCustodialAgentPayment.BatchStatus.Closed,
+                INonCustodialAgentPayment.BatchStatus.Open
+            )
+        );
         protocol.settleBatch(bill.batchId, 0);
     }
 
@@ -199,6 +242,58 @@ contract NonCustodialAgentPaymentTest is Test {
         vm.prank(seller);
         vm.expectRevert(NonCustodialAgentPayment.BatchOwnerMismatch.selector);
         protocol.closeBatch(bill.batchId);
+    }
+
+    function testConfirmBillBySignatureSuccess() public {
+        vm.prank(buyer);
+        uint256 billId =
+            protocol.createBill(seller, address(token), 3_000, keccak256("scope-sig1"), "ipfs://proof-sig1", block.timestamp + 1 days);
+
+        uint256 nonce = protocol.confirmNonce(buyer);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 digest = _confirmBillDigest(billId, nonce, deadline, address(this));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(buyerPk, digest);
+
+        protocol.confirmBillBySignature(billId, deadline, v, r, s);
+        INonCustodialAgentPayment.Bill memory b = protocol.getBill(billId);
+        assertEq(uint8(b.status), uint8(INonCustodialAgentPayment.BillStatus.Confirmed));
+        assertEq(protocol.confirmNonce(buyer), nonce + 1);
+    }
+
+    function testConfirmBillBySignatureRevertsOnReplay() public {
+        vm.prank(buyer);
+        uint256 billId =
+            protocol.createBill(seller, address(token), 3_000, keccak256("scope-sig2"), "ipfs://proof-sig2", block.timestamp + 1 days);
+
+        uint256 nonce = protocol.confirmNonce(buyer);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 digest = _confirmBillDigest(billId, nonce, deadline, address(this));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(buyerPk, digest);
+
+        protocol.confirmBillBySignature(billId, deadline, v, r, s);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NonCustodialAgentPayment.InvalidBillStatus.selector,
+                billId,
+                INonCustodialAgentPayment.BillStatus.Pending,
+                INonCustodialAgentPayment.BillStatus.Confirmed
+            )
+        );
+        protocol.confirmBillBySignature(billId, deadline, v, r, s);
+    }
+
+    function testConfirmBillBySignatureRevertsOnBadSignature() public {
+        vm.prank(buyer);
+        uint256 billId =
+            protocol.createBill(seller, address(token), 3_000, keccak256("scope-sig3"), "ipfs://proof-sig3", block.timestamp + 1 days);
+
+        uint256 nonce = protocol.confirmNonce(buyer);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 digest = _confirmBillDigest(billId, nonce, deadline, address(this));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(sellerPk, digest);
+
+        vm.expectRevert(NonCustodialAgentPayment.InvalidSignature.selector);
+        protocol.confirmBillBySignature(billId, deadline, v, r, s);
     }
 
     function testExpireBillRestoresBothPartiesReserved() public {
@@ -319,7 +414,14 @@ contract NonCustodialAgentPaymentTest is Test {
         uint256 billId =
             protocol.createBill(seller, address(token), 10_000, keccak256("scope-db3"), "ipfs://proof-db3", block.timestamp + 1 days);
         vm.prank(arbitrator);
-        vm.expectRevert(NonCustodialAgentPayment.InvalidState.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NonCustodialAgentPayment.InvalidBillStatus.selector,
+                billId,
+                INonCustodialAgentPayment.BillStatus.Disputed,
+                INonCustodialAgentPayment.BillStatus.Pending
+            )
+        );
         protocol.resolveDisputeBuyer(billId);
     }
 
@@ -502,5 +604,23 @@ contract NonCustodialAgentPaymentTest is Test {
         assertEq(sellerSt.reserved, 0);
         assertTrue(protocol.isAccountConsistent(buyer, address(token)));
         assertTrue(protocol.isAccountConsistent(seller, address(token)));
+    }
+
+    function _confirmBillDigest(uint256 billId, uint256 nonce, uint256 deadline, address relayer)
+        internal
+        view
+        returns (bytes32)
+    {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                EIP712_DOMAIN_TYPEHASH,
+                keccak256("NonCustodialAgentPayment"),
+                keccak256("1"),
+                block.chainid,
+                address(protocol)
+            )
+        );
+        bytes32 structHash = keccak256(abi.encode(CONFIRM_BILL_TYPEHASH, billId, nonce, deadline, relayer));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 }

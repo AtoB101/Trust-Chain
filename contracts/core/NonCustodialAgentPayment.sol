@@ -14,11 +14,16 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     error InvalidDeadline();
     error Unauthorized();
     error InvalidState();
+    error BillNotFound(uint256 billId);
+    error InvalidBillStatus(uint256 billId, BillStatus expected, BillStatus actual);
+    error InvalidBatchStatus(uint256 batchId, BatchStatus expected, BatchStatus actual);
     error CapacityInsufficient();
     error TransferFailed();
     error InvalidShare();
     error InvariantBroken();
     error Reentrancy();
+    error InvalidSignature();
+    error SignatureExpired();
     error BatchAlreadyClosed();
     error BatchPaused();
     error BatchNotFound();
@@ -26,6 +31,7 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     error BatchOwnerMismatch();
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
+    uint256 public constant MAX_BATCH_SETTLE_SIZE = 200;
     uint16 public immutable sellerBondBps;
     uint256 public immutable defaultBillTtlSeconds;
     address public immutable arbitrator;
@@ -41,12 +47,22 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     mapping(uint256 billId => Bill) internal bills;
     mapping(uint256 batchId => Batch) internal batches;
     mapping(uint256 batchId => uint256[]) internal batchBillIds;
+    mapping(uint256 batchId => uint256) internal batchRemainingCount;
+    mapping(uint256 batchId => uint256) internal batchNextSettleIndex;
     mapping(uint256 billId => bool) internal billBatchFinalized;
     mapping(uint256 batchId => address) internal batchOwner;
     mapping(bytes32 ownerTokenKey => uint256 batchId) internal activeBatchByOwnerToken;
+    mapping(address buyer => uint256 nonce) public override confirmNonce;
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
     uint256 private _status = _NOT_ENTERED;
+    uint256 internal constant SECP256K1N_DIV_2 =
+        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
+    bytes32 private immutable _DOMAIN_SEPARATOR;
+    bytes32 private constant _EIP712_DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    bytes32 private constant _CONFIRM_BILL_TYPEHASH =
+        keccak256("ConfirmBill(uint256 billId,uint256 nonce,uint256 deadline,address relayer)");
 
     event LockModeEnabled(address indexed user, address indexed token, uint256 amount, uint256 lockedTotal);
     event LockModeReduced(address indexed user, address indexed token, uint256 amount, uint256 lockedTotal);
@@ -86,6 +102,15 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
         sellerBondBps = sellerBondBps_;
         defaultBillTtlSeconds = defaultBillTtlSeconds_;
         owner = msg.sender;
+        _DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                _EIP712_DOMAIN_TYPEHASH,
+                keccak256("NonCustodialAgentPayment"),
+                keccak256("1"),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     /// @notice Increases logical lock capacity for caller on a token.
@@ -181,6 +206,7 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
             Batch storage batch = batches[batchId];
             batch.totalPending += amount;
             batch.billCount += 1;
+            batchRemainingCount[batchId] += 1;
             batchBillIds[batchId].push(billId);
         }
 
@@ -191,20 +217,53 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param billId Bill identifier.
     function confirmBill(uint256 billId) external override {
         Bill storage b = bills[billId];
-        if (b.billId == 0) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
         if (msg.sender != b.buyer) revert Unauthorized();
-        if (b.status != BillStatus.Pending) revert InvalidState();
+        if (b.status != BillStatus.Pending) {
+            revert InvalidBillStatus(billId, BillStatus.Pending, b.status);
+        }
         b.status = BillStatus.Confirmed;
         emit BillConfirmed(billId, msg.sender);
+    }
+
+    /// @notice Confirms a pending bill with buyer EIP-712 signature; caller may be a relayer.
+    /// @dev Uses buyer nonce for replay protection and binds signature to current relayer.
+    /// @param billId Bill identifier.
+    /// @param deadline Signature expiry timestamp.
+    /// @param v Recovery id.
+    /// @param r Signature r.
+    /// @param s Signature s.
+    function confirmBillBySignature(uint256 billId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external override {
+        if (block.timestamp > deadline) revert SignatureExpired();
+        if (uint256(s) > SECP256K1N_DIV_2) revert InvalidSignature();
+        if (v != 27 && v != 28) revert InvalidSignature();
+
+        Bill storage b = bills[billId];
+        if (b.billId == 0) revert BillNotFound(billId);
+        if (b.status != BillStatus.Pending) {
+            revert InvalidBillStatus(billId, BillStatus.Pending, b.status);
+        }
+
+        uint256 nonce = confirmNonce[b.buyer];
+        bytes32 structHash = keccak256(abi.encode(_CONFIRM_BILL_TYPEHASH, billId, nonce, deadline, msg.sender));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, structHash));
+        address signer = ecrecover(digest, v, r, s);
+        if (signer != b.buyer) revert InvalidSignature();
+
+        confirmNonce[b.buyer] = nonce + 1;
+        b.status = BillStatus.Confirmed;
+        emit BillConfirmed(billId, b.buyer);
     }
 
     /// @notice Cancels a pending bill and releases both parties' reserved amounts.
     /// @param billId Bill identifier.
     function cancelBill(uint256 billId) external override {
         Bill storage b = bills[billId];
-        if (b.billId == 0) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
         if (msg.sender != b.buyer) revert Unauthorized();
-        if (b.status != BillStatus.Pending) revert InvalidState();
+        if (b.status != BillStatus.Pending) {
+            revert InvalidBillStatus(billId, BillStatus.Pending, b.status);
+        }
         _releaseOnCancelOrExpire(b);
         b.status = BillStatus.Cancelled;
         _finalizeBillFromBatch(b);
@@ -216,9 +275,11 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param billId Bill identifier.
     function disputeBill(uint256 billId) external override {
         Bill storage b = bills[billId];
-        if (b.billId == 0) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
         if (msg.sender != b.buyer && msg.sender != b.seller) revert Unauthorized();
-        if (b.status != BillStatus.Confirmed) revert InvalidState();
+        if (b.status != BillStatus.Confirmed) {
+            revert InvalidBillStatus(billId, BillStatus.Confirmed, b.status);
+        }
         b.status = BillStatus.Disputed;
         emit BillDisputed(billId, msg.sender);
     }
@@ -254,8 +315,10 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param billId Bill identifier.
     function expireBill(uint256 billId) external override {
         Bill storage b = bills[billId];
-        if (b.billId == 0) revert InvalidState();
-        if (b.status != BillStatus.Pending && b.status != BillStatus.Confirmed) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
+        if (b.status != BillStatus.Pending && b.status != BillStatus.Confirmed) {
+            revert InvalidState();
+        }
         if (block.timestamp <= b.deadline) revert InvalidState();
         _releaseOnCancelOrExpire(b);
         b.status = BillStatus.Expired;
@@ -270,7 +333,10 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param billId Bill identifier.
     function resolveDisputeBuyer(uint256 billId) external override nonReentrant onlyArbitrator {
         Bill storage b = bills[billId];
-        if (b.status != BillStatus.Disputed) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
+        if (b.status != BillStatus.Disputed) {
+            revert InvalidBillStatus(billId, BillStatus.Disputed, b.status);
+        }
 
         AccountState storage buyerSt = accountStates[b.buyer][b.token];
         AccountState storage sellerSt = accountStates[b.seller][b.token];
@@ -295,7 +361,10 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param billId Bill identifier.
     function resolveDisputeSeller(uint256 billId) external override nonReentrant onlyArbitrator {
         Bill storage b = bills[billId];
-        if (b.status != BillStatus.Disputed) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
+        if (b.status != BillStatus.Disputed) {
+            revert InvalidBillStatus(billId, BillStatus.Disputed, b.status);
+        }
         _settleDisputedBillSellerWins(b);
         b.status = BillStatus.ResolvedSeller;
         _finalizeBillFromBatch(b);
@@ -309,7 +378,10 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param buyerShareBps Buyer share of principal/bond penalty in basis points.
     function resolveDisputeSplit(uint256 billId, uint16 buyerShareBps) external override nonReentrant onlyArbitrator {
         Bill storage b = bills[billId];
-        if (b.status != BillStatus.Disputed) revert InvalidState();
+        if (b.billId == 0) revert BillNotFound(billId);
+        if (b.status != BillStatus.Disputed) {
+            revert InvalidBillStatus(billId, BillStatus.Disputed, b.status);
+        }
         if (buyerShareBps > BPS_DENOMINATOR) revert InvalidShare();
 
         uint256 buyerRefund = (b.amount * buyerShareBps) / BPS_DENOMINATOR;
@@ -348,7 +420,9 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     function closeBatch(uint256 batchId) external override {
         Batch storage batch = batches[batchId];
         if (batch.batchId == 0) revert BatchNotFound();
-        if (batch.status != BatchStatus.Open) revert BatchAlreadyClosed();
+        if (batch.status != BatchStatus.Open) {
+            revert InvalidBatchStatus(batchId, BatchStatus.Open, batch.status);
+        }
         if (batchOwner[batchId] != msg.sender) revert BatchOwnerMismatch();
         batch.status = BatchStatus.Closed;
         bytes32 key = _batchKey(msg.sender, bills[batchBillIds[batchId][0]].token);
@@ -371,13 +445,20 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     {
         Batch storage batch = batches[batchId];
         if (batch.batchId == 0) revert BatchNotFound();
-        if (batch.status != BatchStatus.Closed) revert BatchNotClosed();
+        if (batch.status != BatchStatus.Closed) {
+            revert InvalidBatchStatus(batchId, BatchStatus.Closed, batch.status);
+        }
         if (batchOwner[batchId] != msg.sender) revert BatchOwnerMismatch();
 
         uint256[] storage ids = batchBillIds[batchId];
-        uint256 processLimit = maxBills == 0 || maxBills > ids.length ? ids.length : maxBills;
+        uint256 remaining = ids.length - batchNextSettleIndex[batchId];
+        uint256 requested = maxBills == 0 ? MAX_BATCH_SETTLE_SIZE : maxBills;
+        if (requested > MAX_BATCH_SETTLE_SIZE) requested = MAX_BATCH_SETTLE_SIZE;
+        uint256 processLimit = requested > remaining ? remaining : requested;
 
-        for (uint256 i = 0; i < processLimit; i++) {
+        uint256 start = batchNextSettleIndex[batchId];
+        uint256 end = start + processLimit;
+        for (uint256 i = start; i < end; i++) {
             Bill storage b = bills[ids[i]];
             if (b.status == BillStatus.Confirmed) {
                 if (_hasSpendableBalance(b.buyer, b.token, b.amount)) {
@@ -389,8 +470,9 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
                 }
             }
         }
+        batchNextSettleIndex[batchId] = end;
 
-        if (_isBatchFullyFinalized(batchId)) {
+        if (batchRemainingCount[batchId] == 0) {
             batch.status = BatchStatus.Settled;
             batch.settledAt = block.timestamp;
         }
@@ -559,26 +641,14 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
         } else {
             batch.totalPending = 0;
         }
+        if (batchRemainingCount[batchId] > 0) {
+            batchRemainingCount[batchId] -= 1;
+        }
         billBatchFinalized[b.billId] = true;
-        if (batch.status == BatchStatus.Closed && _isBatchFullyFinalized(batchId)) {
+        if (batch.status == BatchStatus.Closed && batchRemainingCount[batchId] == 0) {
             batch.status = BatchStatus.Settled;
             batch.settledAt = block.timestamp;
         }
-    }
-
-    function _isBatchFullyFinalized(uint256 batchId) internal view returns (bool) {
-        uint256[] storage ids = batchBillIds[batchId];
-        for (uint256 i = 0; i < ids.length; i++) {
-            BillStatus status = bills[ids[i]].status;
-            if (
-                status != BillStatus.Settled && status != BillStatus.Cancelled && status != BillStatus.Expired
-                    && status != BillStatus.ResolvedBuyer && status != BillStatus.ResolvedSeller
-                    && status != BillStatus.SplitResolved
-            ) {
-                return false;
-            }
-        }
-        return true;
     }
 
     modifier onlyArbitrator() {

@@ -56,6 +56,7 @@ interface INonCustodialAgentPayment {
         external
         returns (uint256 billId);
     function confirmBill(uint256 billId) external;
+    function confirmBillBySignature(uint256 billId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
     function cancelBill(uint256 billId) external;
     /// @notice Buyer or seller can raise a dispute on a confirmed bill.
     /// @dev Seller-initiated disputes have no direct economic cost besides gas and can be abused for DoS-style friction.
@@ -74,5 +75,6 @@ interface INonCustodialAgentPayment {
     function getBatchBillIds(uint256 batchId) external view returns (uint256[] memory);
     function getAccountState(address user, address token) external view returns (AccountState memory);
     function getBill(uint256 billId) external view returns (Bill memory);
+    function confirmNonce(address buyer) external view returns (uint256);
     function isAccountConsistent(address user, address token) external view returns (bool);
 }
