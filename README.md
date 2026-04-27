@@ -12,6 +12,20 @@ This repo is intentionally centered on proving that core flow end-to-end:
 
 For roadmap and scope discipline, see: `docs/FOCUS_ROADMAP.md`
 
+## Security Verification Matrix (Latest Audit Baseline)
+
+TrustChain maintains a layered evidence chain from unit testing to formal proofs:
+
+| Layer | Tool | Type | Result |
+| --- | --- | --- | --- |
+| 1 | `forge test` | Unit tests | 55/55 passed |
+| 2 | `forge invariant` | Invariant fuzzing | 256 runs, 0 revert |
+| 3 | Slither | Static analysis | 22 warnings, no fund-loss class issue |
+| 4 | Echidna | Adversarial fuzzing | 100,000 runs, 0 violation |
+| 5 | Certora | Formal verification | 6/6 rules verified |
+
+Formal verification scope and rule-level details are tracked in `SECURITY.md`.
+
 ## Current Module Posture
 
 Primary (V1 first-class):
