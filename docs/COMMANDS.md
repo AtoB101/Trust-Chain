@@ -89,6 +89,10 @@ make quickstart
   CN: 一条命令生成运维摘要（自动刷新关键产物，输出总体健康、告警级别与 runbook 建议）。  
   EN: One-command operational summary (refreshes core artifacts and prints health, alert level, and runbook actions).
 
+- `make ops-alert`  
+  CN: 导出告警工件 JSON（用于对接 IM/告警平台），输出 severity/priority/channel 与 nextActions。  
+  EN: Export alert artifact JSON for ChatOps/on-call integrations with severity/priority/channel and nextActions.
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -116,6 +120,10 @@ make quickstart
 - `make ops-summary`  
   CN: 运行运维摘要（分层入口，一次输出系统健康概览）。  
   EN: Run ops summary (grouped entry for one-shot system health overview).
+
+- `make ops-alert`  
+  CN: 导出标准运维告警工件（分层入口，便于后续告警通道接入）。  
+  EN: Export standardized ops alert artifact (grouped entry for alert channel integrations).
 
 - `make safety-gates`  
   CN: 运行证据/索引门禁（分层入口，等价 `make ci-proof-gates`）。  
@@ -209,7 +217,9 @@ make quickstart
 - `./scripts/system-status.sh --format text`
 - `./scripts/system-status.sh --format json --output results/system-status-latest.json`
 - `./scripts/ops-summary.sh`
-- `./scripts/system-status.sh --format json | jq '.summary,.runbook'`
+- `./scripts/ops-alert.sh --input results/system-status-latest.json --output results/ops-alert-latest.json --format text`
+- `./scripts/ops-alert.sh --input results/system-status-latest.json --output results/ops-alert-latest.json --format json`
+- `./scripts/system-status.sh --format json | jq '.summary'`
 - `./scripts/api_server.py --host 127.0.0.1 --port 8811 --token dev-token`
 - `./scripts/api-smoke.sh --host 127.0.0.1 --port 8811 --token dev-token`
 

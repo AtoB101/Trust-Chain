@@ -40,6 +40,7 @@ Quick docs:
 - Data contracts: `docs/DATA_CONTRACTS_V01.md` (shared output schema/version/trace fields)
 - System status: `make system-status` (aggregate commercial/proof/guardian/contracts into one health view)
 - Ops one-shot summary: `make ops-summary` (generate and print a concise operational status snapshot)
+- Ops alert export: `make ops-alert` (emit `results/ops-alert-latest.json` for IM/on-call integrations)
 - Ops runbook hints: `make ops-summary` now prints severity and prioritized next-actions for on-call execution
 - API roadmap: `docs/API_ROADMAP_V01.md` (ecosystem API landing phases and governance baseline)
 - OpenAPI contract: `openapi/trustchain-v1.yaml` (contract-first API spec for integration teams)

@@ -25,6 +25,6 @@ print(f"patrolHealthy={obj['summary']['patrolHealthy']}")
 print(f"contractsHealthy={obj['summary']['contractsHealthy']}")
 print(f"traceId={obj['traceId']}")
 print("nextActions:")
-for idx, action in enumerate(obj.get("runbook", {}).get("nextActions", []), 1):
+for idx, action in enumerate(obj.get("summary", {}).get("nextActions", []), 1):
     print(f"  {idx}. {action}")
 PY

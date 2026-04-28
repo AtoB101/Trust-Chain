@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema validate-output-contracts ci-proof-gates ci-proof-gate proof-patrol agent-safety-guardian guardian rule-gap-adversarial-sim api-run api-smoke commercialization-gate system-status ops-summary ops-health ops-doctor-json ops-support ops-proof-gates ops-commercialization-gate safety-guardian safety-patrol safety-rulegap safety-commercial-gate api-health api-contract
+.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema validate-output-contracts ci-proof-gates ci-proof-gate proof-patrol agent-safety-guardian guardian rule-gap-adversarial-sim api-run api-smoke commercialization-gate system-status ops-alert ops-summary ops-health ops-doctor-json ops-support ops-proof-gates ops-commercialization-gate safety-guardian safety-patrol safety-rulegap safety-commercial-gate api-health api-contract
 
 help:
 	@echo "Available targets:"
@@ -25,6 +25,7 @@ help:
 	@echo "  make api-smoke               # run API smoke tests against local server"
 	@echo "  make commercialization-gate  # evaluate commercial readiness (MUST/SHOULD/CAN)"
 	@echo "  make system-status           # aggregate latest operational status to system-status JSON"
+	@echo "  make ops-alert               # export alert-friendly JSON artifact for routing"
 	@echo "  make ops-summary             # one-command operational summary and status digest"
 	@echo "  make ops-health              # run doctor + preflight(local) baseline checks (needs forge/cast)"
 	@echo "  make ops-doctor-json         # run doctor JSON report only (no forge/cast requirement)"
@@ -116,6 +117,9 @@ commercialization-gate:
 
 system-status:
 	@./scripts/system-status.sh --output results/system-status-latest.json --format text
+
+ops-alert:
+	@./scripts/ops-alert.sh --input results/system-status-latest.json --output results/ops-alert-latest.json --format text
 
 ops-summary:
 	@./scripts/ops-summary.sh
