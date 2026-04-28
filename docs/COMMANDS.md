@@ -73,6 +73,10 @@ make quickstart
   CN: 运行规则漏洞对抗模拟，生成“利用规则”攻击场景与风险评分报告。  
   EN: Run rule-gap adversarial simulation and export exploit-oriented risk report.
 
+- `make commercialization-gate`  
+  CN: 运行商用准入门禁（MUST/SHOULD/CAN 分层），输出 `commercial-ready` / `pilot-ready` / `not-ready` 结论。  
+  EN: Run commercialization readiness gate (MUST/SHOULD/CAN layers) and output `commercial-ready` / `pilot-ready` / `not-ready`.
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -144,6 +148,8 @@ make quickstart
 - `./scripts/agent-safety-guardian.sh --profile balanced --auto-apply-recommendation --auto-confirm-runs 2 --auto-state results/agent-safety-autotune-state.json`
 - `./scripts/agent-safety-guardian.sh --profile balanced --alert-threshold medium --alarm-output results/agent-safety-alarm-latest.json --fail-on-alarm`
 - `./scripts/rule-gap-adversarial-sim.sh --output results/rule-gap-adversarial-latest.json`
+- `./scripts/commercialization-gate.sh --format text`
+- `./scripts/commercialization-gate.sh --format json --output results/commercialization-gate-latest.json`
 - `./scripts/api_server.py --host 127.0.0.1 --port 8811 --token dev-token`
 - `./scripts/api-smoke.sh --host 127.0.0.1 --port 8811 --token dev-token`
 

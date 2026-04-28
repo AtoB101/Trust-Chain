@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates ci-proof-gate proof-patrol agent-safety-guardian guardian rule-gap-adversarial-sim api-run api-smoke
+.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates ci-proof-gate proof-patrol agent-safety-guardian guardian rule-gap-adversarial-sim api-run api-smoke commercialization-gate
 
 help:
 	@echo "Available targets:"
@@ -22,6 +22,7 @@ help:
 	@echo "  make rule-gap-adversarial-sim # run rule-exploit adversarial simulation scenarios"
 	@echo "  make api-run                 # start TrustChain ecosystem API server on :8811"
 	@echo "  make api-smoke               # run API smoke tests against local server"
+	@echo "  make commercialization-gate  # evaluate commercial readiness (MUST/SHOULD/CAN)"
 
 quickstart:
 	@./scripts/dev-up.sh --from-env
@@ -92,3 +93,6 @@ api-run:
 
 api-smoke:
 	@./scripts/api-smoke.sh --host 127.0.0.1 --port 8811
+
+commercialization-gate:
+	@./scripts/commercialization-gate.sh --output results/commercialization-gate-latest.json --format text
