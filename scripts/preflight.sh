@@ -6,15 +6,16 @@ ENV_FILE="${ROOT_DIR}/.env"
 
 use_env=0
 quiet=0
+mode="full"
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/preflight.sh [--from-env] [--quiet]
+  ./scripts/preflight.sh [--from-env] [--quiet] [--mode <full|local>]
 
 Checks:
   - Required binaries: forge, cast, python3
-  - Required environment variables:
+  - Required environment variables (mode=full):
       ETH_RPC_URL
       DEPLOYER_PRIVATE_KEY
       ADMIN_ADDRESS
@@ -27,6 +28,7 @@ Checks:
 Options:
   --from-env   Load variables from .env in repository root
   --quiet      Reduce non-essential output
+  --mode       full (default) checks env + binaries; local checks binaries only
   -h, --help   Show this help message
 EOF
 }
@@ -41,13 +43,34 @@ ok() { echo "OK   $*"; }
 warn() { echo "WARN $*"; }
 err() { echo "ERR  $*"; }
 
-for arg in "$@"; do
-  case "$arg" in
-    --from-env) use_env=1 ;;
-    --quiet) quiet=1 ;;
-    -h|--help) usage; exit 0 ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --from-env)
+      use_env=1
+      shift
+      ;;
+    --quiet)
+      quiet=1
+      shift
+      ;;
+    --mode)
+      if [[ $# -lt 2 ]]; then
+        err "Missing value for --mode (expected full|local)"
+        exit 1
+      fi
+      mode="$2"
+      if [[ "$mode" != "full" && "$mode" != "local" ]]; then
+        err "Invalid --mode: $mode (expected full|local)"
+        exit 1
+      fi
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
     *)
-      err "Unknown argument: $arg"
+      err "Unknown argument: $1"
       usage
       exit 1
       ;;
@@ -100,18 +123,23 @@ check_cmd forge
 check_cmd cast
 check_cmd python3
 
-log
-log "=== Required environment checks ==="
-check_env_required ETH_RPC_URL
-check_env_required DEPLOYER_PRIVATE_KEY
-check_env_required ADMIN_ADDRESS
+if [[ "$mode" == "full" ]]; then
+  log
+  log "=== Required environment checks ==="
+  check_env_required ETH_RPC_URL
+  check_env_required DEPLOYER_PRIVATE_KEY
+  check_env_required ADMIN_ADDRESS
 
-log
-log "=== Optional environment checks ==="
-check_env_optional TOKEN_ADDRESS
-check_env_optional PAYEE_ADDRESS
-check_env_optional BUYER_PRIVATE_KEY
-check_env_optional SELLER_PRIVATE_KEY
+  log
+  log "=== Optional environment checks ==="
+  check_env_optional TOKEN_ADDRESS
+  check_env_optional PAYEE_ADDRESS
+  check_env_optional BUYER_PRIVATE_KEY
+  check_env_optional SELLER_PRIVATE_KEY
+else
+  log
+  log "=== Environment checks skipped (mode=local) ==="
+fi
 
 if [[ "$missing" -ne 0 ]]; then
   echo
@@ -121,4 +149,8 @@ fi
 
 echo
 ok "Preflight passed."
-ok "Next step: ./scripts/dev-up.sh --from-env"
+if [[ "$mode" == "full" ]]; then
+  ok "Next step: ./scripts/dev-up.sh --from-env"
+else
+  ok "Next step: forge build && forge test --match-path \"contracts/test/NonCustodialAgentPayment.t.sol\" -vv"
+fi

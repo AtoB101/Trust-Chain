@@ -72,6 +72,18 @@ make support-bundle
 
 This writes a zip file in `results/` (e.g. `support-bundle-YYYYmmdd-HHMMSS.zip`).
 
+For local CI-style checks (build + focused tests):
+
+```bash
+make ci-local
+```
+
+If you also want environment validation via `.env`:
+
+```bash
+make ci-local-env
+```
+
 If wallet cannot connect:
 - Use `http://` URL (not `file://`)
 - Check MetaMask unlocked and network matches deployed chain
@@ -83,6 +95,8 @@ If Health Check is blocked:
 - Run `make doctor` for text diagnostics
 - Run `make doctor-json` for machine-readable diagnostics
 - Run `make support-bundle` for one-file handoff
+- Run `make ci-local` for local CI checks before opening a PR
+- Run `make ci-local-env` if you also want `.env` preflight checks
 
 ## 5) 中文快速说明
 
@@ -128,6 +142,18 @@ make support-bundle
 ```
 
 会在 `results/` 下生成 `support-bundle-时间戳.zip`，可直接发送给支持同学。
+
+如果你希望在本地跑一套“提交前检查”（构建 + 核心测试），执行：
+
+```bash
+make ci-local
+```
+
+如果你还希望同时做 `.env` 环境自检，执行：
+
+```bash
+make ci-local-env
+```
 
 ### 第三步：打开前端
 
