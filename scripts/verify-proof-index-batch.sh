@@ -6,11 +6,15 @@ TARGET_DIR="${ROOT_DIR}/results"
 GLOB_PATTERN="support-bundle-*.zip"
 FORMAT="text"
 OUT_PATH=""
+MAX_FAIL=-1
+STRICT=0
+SINCE=""
+UNTIL=""
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/verify-proof-index-batch.sh [--dir <path>] [--glob <pattern>] [--format <text|json|csv>] [--output <path>]
+  ./scripts/verify-proof-index-batch.sh [--dir <path>] [--glob <pattern>] [--format <text|json|csv>] [--output <path>] [--max-fail <n>] [--strict] [--since <stamp>] [--until <stamp>]
 
 Description:
   Batch-verifies manifestDigest for support bundle proof-index manifests.
@@ -21,6 +25,10 @@ Options:
   --glob <pattern>   Filename glob pattern (default: support-bundle-*.zip)
   --format <fmt>     Output format: text (default), json, or csv
   --output <path>    Optional output file path (prints to stdout if omitted)
+  --max-fail <n>     Allow up to n failures before non-zero exit (default: -1 = fail on any)
+  --strict           Treat empty match set as failure
+  --since <stamp>    Include bundles with stamp >= value (YYYYmmddTHHMMSSZ or YYYY-mm-ddTHH:MM:SSZ)
+  --until <stamp>    Include bundles with stamp <= value (YYYYmmddTHHMMSSZ or YYYY-mm-ddTHH:MM:SSZ)
   -h, --help         Show this help message
 EOF
 }
@@ -51,6 +59,29 @@ while [[ $# -gt 0 ]]; do
       OUT_PATH="$2"
       shift 2
       ;;
+    --max-fail)
+      [[ $# -lt 2 ]] && { echo "Error: --max-fail requires a value"; exit 1; }
+      MAX_FAIL="$2"
+      if ! [[ "$MAX_FAIL" =~ ^-?[0-9]+$ ]]; then
+        echo "Error: --max-fail must be an integer"
+        exit 1
+      fi
+      shift 2
+      ;;
+    --strict)
+      STRICT=1
+      shift
+      ;;
+    --since)
+      [[ $# -lt 2 ]] && { echo "Error: --since requires a value"; exit 1; }
+      SINCE="$2"
+      shift 2
+      ;;
+    --until)
+      [[ $# -lt 2 ]] && { echo "Error: --until requires a value"; exit 1; }
+      UNTIL="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -72,7 +103,7 @@ if [[ ! -d "$TARGET_DIR" ]]; then
   exit 1
 fi
 
-python3 - "$ROOT_DIR" "$TARGET_DIR" "$GLOB_PATTERN" "$FORMAT" "$OUT_PATH" <<'PY'
+python3 - "$ROOT_DIR" "$TARGET_DIR" "$GLOB_PATTERN" "$FORMAT" "$OUT_PATH" "$MAX_FAIL" "$STRICT" "$SINCE" "$UNTIL" <<'PY'
 import csv
 import datetime as dt
 import glob
@@ -86,10 +117,26 @@ target_dir = pathlib.Path(sys.argv[2])
 glob_pattern = sys.argv[3]
 out_format = sys.argv[4]
 out_path = sys.argv[5]
+max_fail = int(sys.argv[6])
+strict = int(sys.argv[7])
+since = sys.argv[8]
+until = sys.argv[9]
 
 verify_script = root / "scripts" / "verify-proof-index.sh"
 
-matches = sorted(target_dir.glob(glob_pattern))
+matches_all = sorted(target_dir.glob(glob_pattern))
+matches = []
+for item in matches_all:
+    name = item.name
+    if not name.startswith("support-bundle-") or not name.endswith(".zip"):
+        matches.append(item)
+        continue
+    stamp = name[len("support-bundle-"):-len(".zip")]
+    if since and stamp < since:
+        continue
+    if until and stamp > until:
+        continue
+    matches.append(item)
 results = []
 for item in matches:
     proc = subprocess.run(
@@ -126,6 +173,10 @@ summary = {
     "generatedAt": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "targetDir": str(target_dir),
     "glob": glob_pattern,
+    "since": since or None,
+    "until": until or None,
+    "strict": bool(strict),
+    "maxFail": max_fail,
     "total": len(results),
     "pass": sum(1 for r in results if r.get("status") == "pass"),
     "fail": sum(1 for r in results if r.get("status") != "pass"),
@@ -196,6 +247,13 @@ if out_path:
 else:
     print(rendered, end="")
 
-if summary["fail"] > 0:
+if strict and summary["total"] == 0:
     raise SystemExit(2)
+
+if max_fail >= 0:
+    if summary["fail"] > max_fail:
+        raise SystemExit(2)
+else:
+    if summary["fail"] > 0:
+        raise SystemExit(2)
 PY

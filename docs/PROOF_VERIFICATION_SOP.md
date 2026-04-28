@@ -194,6 +194,20 @@ Batch verification across a directory:
 ./scripts/verify-proof-index-batch.sh --dir results --format json --output results/proof-index-batch-report.json
 ```
 
+Optional policy controls for CI/ops:
+
+```bash
+./scripts/verify-proof-index-batch.sh \
+  --dir results \
+  --since 20260428T120000Z \
+  --until 20260428T130000Z \
+  --strict
+```
+
+- `--strict`: fail if no bundle matched selection.
+- `--max-fail N`: fail when verified failures exceed `N`.
+- `--since/--until`: filter bundles by timestamp in filename (`support-bundle-YYYYmmddTHHMMSSZ.zip`).
+
 Expected terminal result:
 - `PASS` when digest matches canonical recomputation
 - `FAIL` with mismatch reason/details otherwise
