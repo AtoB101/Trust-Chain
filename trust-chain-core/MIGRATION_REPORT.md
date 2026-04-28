@@ -75,3 +75,18 @@
 All future modules involving risk control, data intelligence, routing, optimization,
 revenue models, enterprise admin, and strategy decisions must be implemented
 in `trust-chain-engine` only and must not be merged into `trust-chain-core`.
+
+## 8) Separate-remote publishing (confirmed step)
+
+Use the release helpers under repo root:
+
+- `split-release/publish-core.sh` (publish `trust-chain-core/` to public remote)
+- `split-release/publish-engine.sh` (publish `trust-chain-engine/` to private remote)
+- guide: `split-release/README.md`
+
+Example:
+
+```bash
+./split-release/publish-core.sh git@github.com:<org>/trust-chain-core.git main
+./split-release/publish-engine.sh git@github.com:<org>/trust-chain-engine.git main
+```
