@@ -432,6 +432,8 @@
         <div class="inline-row">
           <button id="exportDiagBtn">Download JSON</button>
           <button id="verifyStableChainBtn">Verify stable hash chain</button>
+          <button id="verifyStableChainFromFileBtn">Verify from JSON file</button>
+          <input id="verifyStableChainFileInput" type="file" accept="application/json,.json" style="display: none" />
           <span class="muted">Includes addresses, KPIs, logs, tx history, and quote fields; no private keys.</span>
         </div>
       </section>
@@ -460,6 +462,7 @@
         txHistory: [],
         stableConfigHistory: [],
         stableConfigVersion: 0,
+        importedStableHistoryVerification: null,
         autoMonitorTimer: null,
         sessionTraceId: null,
       };
@@ -634,6 +637,11 @@
 
       function verifyStableConfigHistoryChain() {
         const history = state.stableConfigHistory || [];
+        return verifyStableConfigHistoryChainFromHistory(history);
+      }
+
+      function verifyStableConfigHistoryChainFromHistory(rawHistory) {
+        const history = Array.isArray(rawHistory) ? rawHistory : [];
         if (!history.length) {
           return {
             ok: true,
@@ -691,6 +699,42 @@
         );
         setOutput({
           step: "stable_chain_verification",
+          ...result,
+        });
+        return result;
+      }
+
+      async function verifyStableChainFromFile(file) {
+        if (!file) throw new Error("Please select a JSON file first.");
+        const text = await file.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          throw new Error("Invalid JSON file.");
+        }
+        const history = parsed?.authSnapshot?.stableConfigHistory;
+        if (!Array.isArray(history)) {
+          throw new Error("JSON missing authSnapshot.stableConfigHistory array.");
+        }
+        const result = verifyStableConfigHistoryChainFromHistory(history);
+        state.importedStableHistoryVerification = {
+          source: "imported_json",
+          fileName: file.name,
+          verifiedAt: new Date().toISOString(),
+          ...result,
+        };
+        addDiagnostic(
+          "stable_chain",
+          result.ok ? "low" : "high",
+          result.ok ? "Stable hash chain verified (file)" : "Stable hash chain verification failed (file)",
+          result.ok
+            ? `file=${file.name}, checked=${result.checkedCount}, breakIndex=null`
+            : `file=${file.name}, checked=${result.checkedCount}, breakIndex=${result.breakIndex}, reason=${result.reason}`
+        );
+        setOutput({
+          step: "stable_chain_verification_file",
+          fileName: file.name,
           ...result,
         });
         return result;
@@ -1093,6 +1137,7 @@
             stableHistoryBreakIndex: stableChainVerification.breakIndex,
             stableHistoryCheckedCount: stableChainVerification.checkedCount,
             stableHistoryVerification: stableChainVerification,
+            importedStableHistoryVerification: state.importedStableHistoryVerification,
           },
         };
       }
@@ -1727,6 +1772,26 @@
             setOutput(msg);
           })
       );
+      document.getElementById("verifyStableChainFromFileBtn").addEventListener("click", () => {
+        const fileInput = document.getElementById("verifyStableChainFileInput");
+        if (!(fileInput instanceof HTMLInputElement)) return;
+        fileInput.click();
+      });
+      document.getElementById("verifyStableChainFileInput").addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        const file = target.files?.[0];
+        Promise.resolve()
+          .then(() => verifyStableChainFromFile(file))
+          .catch((e) => {
+            const msg = readErrorMessage(e);
+            addDiagnostic("stable_chain", "high", "Stable chain file verification failed", msg, e);
+            setOutput(msg);
+          })
+          .finally(() => {
+            target.value = "";
+          });
+      });
       document.getElementById("applyPolicyBtn").addEventListener("click", () =>
         applyPolicyConfig().catch((e) => {
           const msg = readErrorMessage(e);

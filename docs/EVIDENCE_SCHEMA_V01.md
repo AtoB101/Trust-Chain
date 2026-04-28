@@ -124,6 +124,15 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
 - `stableHistoryBreakIndex` (nullable integer; first failing index when integrity is `fail`)
 - `stableHistoryCheckedCount` (integer; number of records checked)
 - `stableHistoryVerification` (object with detailed verification output)
+- `importedStableHistoryVerification` (object; last offline verification result for imported diagnosis JSON; nullable)
+  - `source` (`imported_json`)
+  - `fileName`
+  - `ok`
+  - `checkedCount`
+  - `breakIndex`
+  - `reason` (nullable)
+  - `expectedHash` (nullable)
+  - `actualHash` (nullable)
 - `stableSettlement`:
   - `enforcementEnabled` (nullable boolean)
   - `minSettlementAmount` (nullable string)

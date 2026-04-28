@@ -133,6 +133,28 @@ Exported fields now include verification results:
 - `riskSnapshot.stableHistoryCheckedCount` (number of checked records)
 - `riskSnapshot.stableHistoryVerification` (full verifier output object)
 
+## Evidence integration (M2.6 offline file verification extension)
+
+Frontend now supports offline verification against an exported diagnosis JSON file,
+without on-chain RPC access:
+
+- UI action: `Verify from JSON file`
+- input source: local file picker (`.json`) from operator machine
+- verification target: `authSnapshot.stableConfigHistory[]` inside imported JSON
+- verification method: same canonical hash-chain verifier used for live in-memory history
+
+Result behavior:
+
+- writes `stable_chain` diagnostic (low on pass, high on fail)
+- writes output step `stable_chain_verification_file`
+- includes file metadata and verification summary:
+  - `filename`
+  - `recordCount`
+  - `ok`
+  - `breakIndex`
+  - `checkedCount`
+  - `reason` (when failed)
+
 ## Suggested rollout
 
 1. Deploy with enforcement disabled (default) and set desired `minSettlementAmount`.
