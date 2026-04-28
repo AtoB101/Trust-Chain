@@ -670,6 +670,24 @@
         if (m.includes("unauthorized")) {
           return { kind: "unauthorized_action", severity: "high", title: "Unauthorized action" };
         }
+        if (m.includes("policyviolation")) {
+          return { kind: "policy_violation", severity: "high", title: "Policy violation" };
+        }
+        if (m.includes("pertxlimitexceeded")) {
+          return { kind: "policy_per_tx_limit", severity: "high", title: "Per-transaction policy limit exceeded" };
+        }
+        if (m.includes("dailylimitexceeded")) {
+          return { kind: "policy_daily_limit", severity: "high", title: "Daily policy limit exceeded" };
+        }
+        if (m.includes("policyexpired")) {
+          return { kind: "policy_expired", severity: "high", title: "Policy expired" };
+        }
+        if (m.includes("counterpartynotallowed")) {
+          return { kind: "policy_payee_blocked", severity: "high", title: "Payee blocked by policy" };
+        }
+        if (m.includes("scopenotallowed")) {
+          return { kind: "policy_scope_blocked", severity: "high", title: "Scope blocked by policy" };
+        }
         if (m.includes("invalidstate") || m.includes("quotealreadyexecuted") || m.includes("batchalreadyclosed")) {
           return { kind: "invalid_state", severity: "high", title: "Invalid state transition" };
         }
@@ -742,6 +760,36 @@
         return `trace-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       }
 
+      function parsePolicyDecisionFromDiagnostics() {
+        const latestPolicyIssue = state.diagnostics.find((d) => d.kind.startsWith("policy_"));
+        if (latestPolicyIssue) {
+          return {
+            result: "blocked",
+            reasonKind: latestPolicyIssue.kind,
+            reasonTitle: latestPolicyIssue.title,
+            detail: latestPolicyIssue.detail,
+            decidedAt: latestPolicyIssue.timestamp,
+          };
+        }
+        const hasPolicySuccess = state.diagnostics.find((d) => d.kind === "policy" && d.title.toLowerCase().includes("updated"));
+        if (hasPolicySuccess) {
+          return {
+            result: "allowed",
+            reasonKind: "policy_configured",
+            reasonTitle: hasPolicySuccess.title,
+            detail: hasPolicySuccess.detail,
+            decidedAt: hasPolicySuccess.timestamp,
+          };
+        }
+        return {
+          result: "unknown",
+          reasonKind: null,
+          reasonTitle: null,
+          detail: "No explicit policy decision in diagnostics yet.",
+          decidedAt: null,
+        };
+      }
+
       async function buildDiagnosisReport() {
         const inputs = readInputs();
         const inputsSerialized = {
@@ -773,6 +821,9 @@
             walletFull = null;
           }
         }
+
+        const policySnapshotText = document.getElementById("policySnapshot")?.textContent || null;
+        const policyDecision = parsePolicyDecisionFromDiagnostics();
 
         return {
           reportVersion: "1.1",
@@ -809,6 +860,8 @@
               kind: logFilterKindEl.value,
               severity: logFilterSeverityEl.value,
             },
+            policySnapshot: policySnapshotText,
+            policyDecision,
           },
           executionSnapshot: {
             diagnostics: state.diagnostics.map((d) => ({
