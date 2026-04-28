@@ -42,6 +42,20 @@ Open:
 - `GET /api/status`
 - `POST /api/btc-price-paid`
 
+## External user simulation
+
+```bash
+npm run simulate
+# writes logs/external-user-call-summary.json
+```
+
+## Capture demo proof bundle
+
+```bash
+npm run proof
+# writes logs/demo-proof-<timestamp>.json
+```
+
 ## Simulate external user first paid call
 
 Run one paid call from an "external user" wallet context and print a concise summary:
