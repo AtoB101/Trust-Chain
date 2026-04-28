@@ -93,6 +93,10 @@ make quickstart
   CN: 导出告警工件 JSON（用于对接 IM/告警平台），输出 severity/priority/channel 与 nextActions。  
   EN: Export alert artifact JSON for ChatOps/on-call integrations with severity/priority/channel and nextActions.
 
+- `make release-readiness`  
+  CN: 发版前总门禁（一条命令串行执行：commercialization/proof-gates/patrol/guardian/contracts/system-status/ops-alert，任一失败即阻断）。  
+  EN: Pre-release master gate (single command runs commercialization/proof-gates/patrol/guardian/contracts/system-status/ops-alert; any failure blocks release).
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -219,6 +223,7 @@ make quickstart
 - `./scripts/ops-summary.sh`
 - `./scripts/ops-alert.sh --input results/system-status-latest.json --output results/ops-alert-latest.json --format text`
 - `./scripts/ops-alert.sh --input results/system-status-latest.json --output results/ops-alert-latest.json --format json`
+- `./scripts/release-readiness.sh`
 - `./scripts/system-status.sh --format json | jq '.summary'`
 - `./scripts/api_server.py --host 127.0.0.1 --port 8811 --token dev-token`
 - `./scripts/api-smoke.sh --host 127.0.0.1 --port 8811 --token dev-token`
