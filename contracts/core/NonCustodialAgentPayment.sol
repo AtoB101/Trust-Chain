@@ -52,6 +52,8 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     error PerTxLimitExceeded();
     error CounterpartyNotAllowed();
     error ScopeNotAllowed();
+    error SettlementTokenNotAllowed();
+    error SettlementAmountTooLow();
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
     uint256 public constant MAX_BATCH_SETTLE_SIZE = 200;
@@ -80,6 +82,9 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     mapping(address owner => PolicyUsage) internal policyUsageByOwner;
     mapping(address owner => mapping(address counterparty => bool)) internal policyAllowedCounterparty;
     mapping(address owner => mapping(bytes32 scopeHash => bool)) internal policyAllowedScope;
+    mapping(address token => bool) internal settlementTokenAllowed;
+    bool public settlementTokenEnforced;
+    uint256 public minSettlementAmount;
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
     uint256 private _status = _NOT_ENTERED;
@@ -128,6 +133,8 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     event PolicyScopeUpdated(address indexed owner, bytes32 indexed scopeHash, bool allowed);
     event PolicyUsageUpdated(address indexed owner, uint256 dayIndex, uint256 spentToday, uint256 txCountToday, uint256 txCountHour);
     event PolicyViolationEvent(address indexed owner, address indexed counterparty, bytes32 indexed scopeHash, string reason);
+    event SettlementTokenRuleUpdated(address indexed token, bool allowed);
+    event SettlementGuardUpdated(bool tokenEnforced, uint256 minAmount);
 
     /// @notice Creates the non-custodial payment protocol core.
     /// @param arbitrator_ Address allowed to resolve disputed bills.
@@ -202,6 +209,7 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
         if (seller == address(0) || token == address(0)) revert InvalidAddress();
         if (seller == msg.sender) revert Unauthorized();
         if (amount == 0) revert InvalidAmount();
+        _enforceSettlementGuard(token, amount);
         _enforcePolicy(msg.sender, seller, scopeHash, amount);
 
         uint256 finalDeadline = deadline == 0 ? block.timestamp + defaultBillTtlSeconds : deadline;
@@ -535,6 +543,22 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
         emit BatchCircuitBreakerUpdated(paused);
     }
 
+    function setSettlementTokenRule(address token, bool allowed) external override onlyOwner {
+        if (token == address(0)) revert InvalidAddress();
+        settlementTokenAllowed[token] = allowed;
+        emit SettlementTokenRuleUpdated(token, allowed);
+    }
+
+    function setSettlementGuard(bool tokenEnforced, uint256 minAmount) external override onlyOwner {
+        settlementTokenEnforced = tokenEnforced;
+        minSettlementAmount = minAmount;
+        emit SettlementGuardUpdated(tokenEnforced, minAmount);
+    }
+
+    function isSettlementTokenAllowed(address token) external view override returns (bool) {
+        return settlementTokenAllowed[token];
+    }
+
     /// @notice Configures caller policy constraints for bill creation.
     /// @param enabled Whether policy checks are enabled.
     /// @param dailyLimit Max total bill principal per UTC day.
@@ -761,6 +785,11 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
 
     function _batchKey(address batchOwnerAddr, address token) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(batchOwnerAddr, token));
+    }
+
+    function _enforceSettlementGuard(address token, uint256 amount) internal view {
+        if (minSettlementAmount > 0 && amount < minSettlementAmount) revert SettlementAmountTooLow();
+        if (settlementTokenEnforced && !settlementTokenAllowed[token]) revert SettlementTokenNotAllowed();
     }
 
     function _enforcePolicy(address ownerAddr, address counterparty, bytes32 scopeHash, uint256 amount) internal {

@@ -685,6 +685,42 @@ contract NonCustodialAgentPaymentTest is Test {
         assertGt(day1, day0);
     }
 
+    function testStableSettlementTokenGateBlocksNonAllowedToken() public {
+        vm.prank(address(this)); // owner
+        protocol.setSettlementTokenGateConfig(true, 1);
+        vm.prank(address(this)); // owner
+        protocol.setSettlementTokenAllowed(address(token), false);
+
+        vm.prank(buyer);
+        vm.expectRevert(NonCustodialAgentPayment.SettlementTokenBlocked.selector);
+        protocol.createBill(seller, address(token), 1_000, keccak256("scope-m2-token-block"), "ipfs://proof-m2-token-block", block.timestamp + 1 days);
+    }
+
+    function testStableSettlementMinAmountBlocksSmallBills() public {
+        vm.prank(address(this)); // owner
+        protocol.setSettlementTokenGateConfig(true, 2_000);
+        vm.prank(address(this)); // owner
+        protocol.setSettlementTokenAllowed(address(token), true);
+
+        vm.prank(buyer);
+        vm.expectRevert(NonCustodialAgentPayment.SettlementAmountTooSmall.selector);
+        protocol.createBill(seller, address(token), 1_000, keccak256("scope-m2-small"), "ipfs://proof-m2-small", block.timestamp + 1 days);
+    }
+
+    function testStableSettlementAllowedTokenAndAmountPasses() public {
+        vm.prank(address(this)); // owner
+        protocol.setSettlementTokenGateConfig(true, 2_000);
+        vm.prank(address(this)); // owner
+        protocol.setSettlementTokenAllowed(address(token), true);
+
+        vm.prank(buyer);
+        uint256 billId =
+            protocol.createBill(seller, address(token), 2_500, keccak256("scope-m2-pass"), "ipfs://proof-m2-pass", block.timestamp + 1 days);
+        INonCustodialAgentPayment.Bill memory b = protocol.getBill(billId);
+        assertEq(b.amount, 2_500);
+        assertEq(uint8(b.status), uint8(INonCustodialAgentPayment.BillStatus.Pending));
+    }
+
     function testCloseBatchBlockedByPolicyWhenNoScopeRule() public {
         vm.prank(buyer);
         protocol.setPolicy(true, 50_000, 100_000, 0, block.timestamp + 1 days);
