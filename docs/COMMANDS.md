@@ -131,6 +131,7 @@ make quickstart
 - `./scripts/proof-patrol.sh --profile balanced --since "2026-04-28T00:00:00Z" --until "2026-04-28T23:59:59Z"`
 - `./scripts/agent-safety-guardian.sh --profile strict --output results/agent-safety-guardian-strict.json --register results/agent-risk-register.json`
 - `./scripts/agent-safety-guardian.sh --profile balanced --trend-window-hours 24 --escalate-repeat-threshold 2`
+- `./scripts/agent-safety-guardian.sh --profile balanced --auto-apply-recommendation --auto-confirm-runs 2 --auto-state results/agent-safety-autotune-state.json`
 
 ## Frontend URL
 

@@ -5,21 +5,25 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RESULTS_DIR="${ROOT_DIR}/results"
 
 PROFILE="balanced"
+PROFILE_EXPLICIT=0
 FROM_ENV=0
 SKIP_PROOF_GATES=0
 SKIP_PATROL=0
 SKIP_SUPPORT_BUNDLE=0
 OUTPUT_PATH="${RESULTS_DIR}/agent-safety-guardian-latest.json"
 REGISTER_PATH="${RESULTS_DIR}/agent-risk-register.json"
+AUTO_STATE_PATH="${RESULTS_DIR}/agent-safety-autotune-state.json"
 HISTORY_LIMIT=200
 TREND_WINDOW_HOURS=168
 ESCALATE_REPEAT_THRESHOLD=3
 DECAY_HALF_LIFE_HOURS=48
+AUTO_APPLY_RECOMMENDATION=0
+AUTO_CONFIRM_RUNS=2
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/agent-safety-guardian.sh [--profile <strict|balanced|lenient>] [--from-env] [--skip-proof-gates] [--skip-patrol] [--skip-support-bundle] [--output <path>] [--register <path>] [--history-limit <n>] [--trend-window-hours <n>] [--escalate-repeat-threshold <n>] [--decay-half-life-hours <n>]
+  ./scripts/agent-safety-guardian.sh [--profile <strict|balanced|lenient>] [--from-env] [--skip-proof-gates] [--skip-patrol] [--skip-support-bundle] [--output <path>] [--register <path>] [--auto-state <path>] [--history-limit <n>] [--trend-window-hours <n>] [--escalate-repeat-threshold <n>] [--decay-half-life-hours <n>] [--auto-apply-recommendation] [--auto-confirm-runs <n>]
 
 Description:
   Runs an end-to-end internal safety self-check pipeline and generates:
@@ -34,10 +38,13 @@ Options:
   --skip-support-bundle  Skip support-bundle generation stage
   --output <path>        Safety report path (default: results/agent-safety-guardian-latest.json)
   --register <path>      Persistent risk register path (default: results/agent-risk-register.json)
+  --auto-state <path>    Auto-tuning state file for profile switching (default: results/agent-safety-autotune-state.json)
   --history-limit <n>    Keep latest N risk records in register (default: 200)
   --trend-window-hours <n>        Window for trend stats and repeat checks (default: 168)
   --escalate-repeat-threshold <n> Escalate warning->high when same risk code repeats >= n times in trend window (default: 3)
   --decay-half-life-hours <n>     Half-life for time-decay risk scoring/heat index (default: 48)
+  --auto-apply-recommendation     Enable automatic profile switch via persistent state
+  --auto-confirm-runs <n>         Required consecutive recommendation runs before switching profile (default: 2)
   -h, --help             Show this help message
 EOF
 }
@@ -47,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     --profile)
       [[ $# -lt 2 ]] && { echo "Error: --profile requires a value"; exit 1; }
       PROFILE="$2"
+      PROFILE_EXPLICIT=1
       if [[ "$PROFILE" != "strict" && "$PROFILE" != "balanced" && "$PROFILE" != "lenient" ]]; then
         echo "Error: --profile must be one of strict|balanced|lenient"
         exit 1
@@ -77,6 +85,11 @@ while [[ $# -gt 0 ]]; do
     --register)
       [[ $# -lt 2 ]] && { echo "Error: --register requires a value"; exit 1; }
       REGISTER_PATH="$2"
+      shift 2
+      ;;
+    --auto-state)
+      [[ $# -lt 2 ]] && { echo "Error: --auto-state requires a value"; exit 1; }
+      AUTO_STATE_PATH="$2"
       shift 2
       ;;
     --history-limit)
@@ -115,6 +128,19 @@ while [[ $# -gt 0 ]]; do
       fi
       shift 2
       ;;
+    --auto-apply-recommendation)
+      AUTO_APPLY_RECOMMENDATION=1
+      shift
+      ;;
+    --auto-confirm-runs)
+      [[ $# -lt 2 ]] && { echo "Error: --auto-confirm-runs requires a value"; exit 1; }
+      AUTO_CONFIRM_RUNS="$2"
+      if ! [[ "$AUTO_CONFIRM_RUNS" =~ ^[0-9]+$ ]]; then
+        echo "Error: --auto-confirm-runs must be a non-negative integer"
+        exit 1
+      fi
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -133,7 +159,31 @@ fi
 if [[ "$REGISTER_PATH" != /* ]]; then
   REGISTER_PATH="${ROOT_DIR}/${REGISTER_PATH}"
 fi
-mkdir -p "$RESULTS_DIR" "$(dirname "$OUTPUT_PATH")" "$(dirname "$REGISTER_PATH")"
+if [[ "$AUTO_STATE_PATH" != /* ]]; then
+  AUTO_STATE_PATH="${ROOT_DIR}/${AUTO_STATE_PATH}"
+fi
+mkdir -p "$RESULTS_DIR" "$(dirname "$OUTPUT_PATH")" "$(dirname "$REGISTER_PATH")" "$(dirname "$AUTO_STATE_PATH")"
+
+if [[ "$AUTO_APPLY_RECOMMENDATION" -eq 1 && "$PROFILE_EXPLICIT" -eq 0 && -f "$AUTO_STATE_PATH" ]]; then
+  AUTO_PROFILE="$(python3 - "$AUTO_STATE_PATH" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    print("")
+    raise SystemExit(0)
+profile = data.get("activeProfile")
+print(profile if profile in {"strict", "balanced", "lenient"} else "")
+PY
+)"
+  if [[ -n "$AUTO_PROFILE" ]]; then
+    PROFILE="$AUTO_PROFILE"
+  fi
+fi
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 TMP_DIR="$(mktemp -d)"
@@ -183,7 +233,7 @@ if [[ "$SKIP_PATROL" -eq 0 ]]; then
   set -e
 fi
 
-python3 - "$DOCTOR_JSON" "$PATROL_BATCH" "$PATROL_ALERT" "$REGISTER_PATH" "$OUTPUT_PATH" "$PROFILE" "$STAMP" "$PROOF_GATES_EXIT" "$PATROL_EXIT" "$SUPPORT_BUNDLE_EXIT" "$HISTORY_LIMIT" "$SKIP_PROOF_GATES" "$SKIP_PATROL" "$SKIP_SUPPORT_BUNDLE" "$TREND_WINDOW_HOURS" "$ESCALATE_REPEAT_THRESHOLD" "$DECAY_HALF_LIFE_HOURS" <<'PY'
+python3 - "$DOCTOR_JSON" "$PATROL_BATCH" "$PATROL_ALERT" "$REGISTER_PATH" "$OUTPUT_PATH" "$AUTO_STATE_PATH" "$PROFILE" "$STAMP" "$PROOF_GATES_EXIT" "$PATROL_EXIT" "$SUPPORT_BUNDLE_EXIT" "$HISTORY_LIMIT" "$SKIP_PROOF_GATES" "$SKIP_PATROL" "$SKIP_SUPPORT_BUNDLE" "$TREND_WINDOW_HOURS" "$ESCALATE_REPEAT_THRESHOLD" "$DECAY_HALF_LIFE_HOURS" "$AUTO_APPLY_RECOMMENDATION" "$AUTO_CONFIRM_RUNS" <<'PY'
 import datetime as dt
 import json
 import pathlib
@@ -195,18 +245,21 @@ patrol_batch_path = pathlib.Path(sys.argv[2])
 patrol_alert_path = pathlib.Path(sys.argv[3])
 register_path = pathlib.Path(sys.argv[4])
 output_path = pathlib.Path(sys.argv[5])
-profile = sys.argv[6]
-stamp = sys.argv[7]
-proof_gates_exit = int(sys.argv[8])
-patrol_exit = int(sys.argv[9])
-support_bundle_exit = int(sys.argv[10])
-history_limit = int(sys.argv[11])
-skip_proof_gates = int(sys.argv[12])
-skip_patrol = int(sys.argv[13])
-skip_support_bundle = int(sys.argv[14])
-trend_window_hours = int(sys.argv[15])
-escalate_repeat_threshold = int(sys.argv[16])
-decay_half_life_hours = int(sys.argv[17]) if len(sys.argv) > 17 else 48
+auto_state_path = pathlib.Path(sys.argv[6])
+profile = sys.argv[7]
+stamp = sys.argv[8]
+proof_gates_exit = int(sys.argv[9])
+patrol_exit = int(sys.argv[10])
+support_bundle_exit = int(sys.argv[11])
+history_limit = int(sys.argv[12])
+skip_proof_gates = int(sys.argv[13])
+skip_patrol = int(sys.argv[14])
+skip_support_bundle = int(sys.argv[15])
+trend_window_hours = int(sys.argv[16])
+escalate_repeat_threshold = int(sys.argv[17])
+decay_half_life_hours = int(sys.argv[18]) if len(sys.argv) > 18 else 48
+auto_apply_recommendation = int(sys.argv[19]) if len(sys.argv) > 19 else 0
+auto_confirm_runs = int(sys.argv[20]) if len(sys.argv) > 20 else 2
 
 now_iso = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 now_dt = dt.datetime.now(dt.timezone.utc)
@@ -469,6 +522,47 @@ else:
         f"(heatIndex={heat_index}, recentCritical={recent_critical}, escalations={escalation_count})"
     )
 
+auto_state = {
+    "version": "agent-safety-autotune-v1",
+    "updatedAt": now_iso,
+    "activeProfile": profile,
+    "pendingRecommendation": recommended_profile,
+    "pendingStreak": 0,
+    "confirmRuns": auto_confirm_runs,
+    "lastAppliedAt": None,
+    "lastDecision": "manual_mode",
+}
+if auto_state_path.exists():
+    try:
+        loaded_auto_state = json.loads(auto_state_path.read_text(encoding="utf-8"))
+        if isinstance(loaded_auto_state, dict):
+            auto_state.update(loaded_auto_state)
+    except Exception:
+        pass
+
+auto_state["updatedAt"] = now_iso
+auto_state["confirmRuns"] = auto_confirm_runs
+auto_state["activeProfile"] = profile
+
+if auto_apply_recommendation:
+    if recommended_profile != profile:
+        if auto_state.get("pendingRecommendation") == recommended_profile:
+            auto_state["pendingStreak"] = int(auto_state.get("pendingStreak", 0)) + 1
+        else:
+            auto_state["pendingRecommendation"] = recommended_profile
+            auto_state["pendingStreak"] = 1
+        if int(auto_state.get("pendingStreak", 0)) >= max(1, auto_confirm_runs):
+            auto_state["activeProfile"] = recommended_profile
+            auto_state["lastAppliedAt"] = now_iso
+            auto_state["lastDecision"] = "switched"
+            auto_state["pendingStreak"] = 0
+        else:
+            auto_state["lastDecision"] = "awaiting_confirmation"
+    else:
+        auto_state["pendingRecommendation"] = recommended_profile
+        auto_state["pendingStreak"] = 0
+        auto_state["lastDecision"] = "no_change"
+
 overall = "pass" if not risks else ("warning" if all(r["severity"] == "warning" for r in risks) else "fail")
 
 report = {
@@ -527,6 +621,17 @@ report = {
             "recommended": recommended_profile,
             "reason": recommendation_reason,
         },
+        "autoTuning": {
+            "enabled": bool(auto_apply_recommendation),
+            "confirmRuns": max(1, auto_confirm_runs),
+            "statePath": str(auto_state_path),
+            "activeProfile": auto_state.get("activeProfile"),
+            "pendingRecommendation": auto_state.get("pendingRecommendation"),
+            "pendingStreak": auto_state.get("pendingStreak"),
+            "lastDecision": auto_state.get("lastDecision"),
+            "lastAppliedAt": auto_state.get("lastAppliedAt"),
+            "nextRunProfile": auto_state.get("activeProfile") if auto_apply_recommendation else profile,
+        },
         "windowHours": trend_window_hours,
         "repeatEscalationThreshold": escalate_repeat_threshold,
         "nextActions": [
@@ -552,6 +657,7 @@ register_payload = {
 }
 
 register_path.write_text(json.dumps(register_payload, indent=2) + "\n", encoding="utf-8")
+auto_state_path.write_text(json.dumps(auto_state, indent=2) + "\n", encoding="utf-8")
 output_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 print(f"Safety report written: {output_path}")

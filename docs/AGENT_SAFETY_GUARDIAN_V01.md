@@ -1,4 +1,4 @@
-# Agent Safety Guardian v0.2
+# Agent Safety Guardian v0.3
 
 This document defines the full-chain "Agent Safety Guardian" workflow for internal validation, risk identification, severity tagging, risk registration, and predictive-defense signal generation.
 
@@ -99,7 +99,7 @@ Cron example (UTC hourly):
 0 * * * * cd /path/to/repo && ./scripts/agent-safety-guardian.sh --profile balanced
 ```
 
-## 8) Predictive defense usage (v0.2)
+## 8) Predictive defense usage (v0.3)
 
 `agent-risk-register.json` and guardian report are designed for:
 
@@ -120,6 +120,16 @@ v0.2 adds:
   - `strict` for high heat or critical trend pattern
   - `balanced` for medium heat
   - `lenient` for low heat
+
+v0.3 adds:
+
+- **optional auto-execution mode for patrol profile switching**
+  - `--auto-apply-recommendation`: allow guardian to auto-switch next run profile
+  - `--auto-confirm-runs <n>`: require repeated recommendation hits before switching
+  - `--auto-state <path>`: persistent state for recommendation streak and applied profile
+- **audit trail for profile automation**
+  - `predictiveDefense.autoTuning` in report
+  - includes `pendingStreak`, `activeProfile`, `nextRunProfile`, `lastDecision`, and switch metadata
 
 Recommended next step:
 
