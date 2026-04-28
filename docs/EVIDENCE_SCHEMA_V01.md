@@ -120,6 +120,10 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
 - `stableConfigChanges` (count of stable config changes captured in current evidence)
 - `latestStableConfigVersion` (latest stable config history version; nullable)
 - `stableConfigChainHead` (latest stable history `currentHash`; nullable)
+- `stableHistoryIntegrity` (`pass | fail`; result of hash-chain verification)
+- `stableHistoryBreakIndex` (nullable integer; first failing index when integrity is `fail`)
+- `stableHistoryCheckedCount` (integer; number of records checked)
+- `stableHistoryVerification` (object with detailed verification output)
 - `stableSettlement`:
   - `enforcementEnabled` (nullable boolean)
   - `minSettlementAmount` (nullable string)

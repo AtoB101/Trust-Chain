@@ -119,6 +119,20 @@ Hashing rules in current frontend implementation:
 
 This enables quick integrity checks across exported history items by recomputing hashes in order.
 
+## Evidence integration (M2.5 verification extension)
+
+Frontend now supports one-click integrity verification from the export panel:
+
+- UI action: `Verify stable hash chain`
+- implementation: recompute `currentHash` over each history record and validate `prevHash` linkage
+
+Exported fields now include verification results:
+
+- `riskSnapshot.stableHistoryIntegrity` (`pass | fail`)
+- `riskSnapshot.stableHistoryBreakIndex` (first broken index or `null`)
+- `riskSnapshot.stableHistoryCheckedCount` (number of checked records)
+- `riskSnapshot.stableHistoryVerification` (full verifier output object)
+
 ## Suggested rollout
 
 1. Deploy with enforcement disabled (default) and set desired `minSettlementAmount`.

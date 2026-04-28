@@ -431,6 +431,7 @@
         <h3>Export JSON for support</h3>
         <div class="inline-row">
           <button id="exportDiagBtn">Download JSON</button>
+          <button id="verifyStableChainBtn">Verify stable hash chain</button>
           <span class="muted">Includes addresses, KPIs, logs, tx history, and quote fields; no private keys.</span>
         </div>
       </section>
@@ -612,6 +613,87 @@
           currentHash,
         });
         state.stableConfigHistory = state.stableConfigHistory.slice(0, 40);
+      }
+
+      function buildStableHistoryHashPayload(record) {
+        return JSON.stringify({
+          prevHash: record.prevHash ?? null,
+          version: record.version ?? null,
+          traceId: record.traceId ?? null,
+          timestamp: record.timestamp ?? null,
+          action: record.action ?? null,
+          reason: record.reason ?? null,
+          operator: record.operator ?? null,
+          tokenAddress: record.tokenAddress ?? null,
+          tokenAllowed: record.tokenAllowed ?? null,
+          enforcementEnabled: record.enforcementEnabled ?? null,
+          minSettlementAmount: record.minSettlementAmount ?? null,
+          txHashes: record.txHashes ?? null,
+        });
+      }
+
+      function verifyStableConfigHistoryChain() {
+        const history = state.stableConfigHistory || [];
+        if (!history.length) {
+          return {
+            ok: true,
+            checkedCount: 0,
+            breakIndex: null,
+            expectedHash: null,
+            actualHash: null,
+          };
+        }
+        for (let i = 0; i < history.length; i += 1) {
+          const current = history[i];
+          const prev = history[i + 1];
+          const expectedPrevHash = prev?.currentHash || "0x0";
+          if ((current.prevHash || null) !== expectedPrevHash) {
+            return {
+              ok: false,
+              checkedCount: i + 1,
+              breakIndex: i,
+              reason: "prev_hash_mismatch",
+              expectedHash: expectedPrevHash,
+              actualHash: current.prevHash || null,
+            };
+          }
+          const payload = buildStableHistoryHashPayload(current);
+          const recomputed = keccak256(toUtf8Bytes(payload));
+          if ((current.currentHash || null) !== recomputed) {
+            return {
+              ok: false,
+              checkedCount: i + 1,
+              breakIndex: i,
+              reason: "current_hash_mismatch",
+              expectedHash: recomputed,
+              actualHash: current.currentHash || null,
+            };
+          }
+        }
+        return {
+          ok: true,
+          checkedCount: history.length,
+          breakIndex: null,
+          expectedHash: null,
+          actualHash: null,
+        };
+      }
+
+      function runStableChainVerification() {
+        const result = verifyStableConfigHistoryChain();
+        addDiagnostic(
+          "stable_chain",
+          result.ok ? "low" : "high",
+          result.ok ? "Stable hash chain verified" : "Stable hash chain verification failed",
+          result.ok
+            ? `checked=${result.checkedCount}, breakIndex=null`
+            : `checked=${result.checkedCount}, breakIndex=${result.breakIndex}, reason=${result.reason}`
+        );
+        setOutput({
+          step: "stable_chain_verification",
+          ...result,
+        });
+        return result;
       }
 
       function syncLogKindOptions() {
@@ -924,6 +1006,7 @@
         const stableSnapshotText = document.getElementById("stableSettlementSnapshot")?.textContent || null;
         const policyDecision = parsePolicyDecisionFromDiagnostics();
         const stableDecision = parseStableDecisionFromDiagnostics();
+        const stableChainVerification = verifyStableConfigHistoryChain();
 
         return {
           reportVersion: "1.1",
@@ -1006,6 +1089,10 @@
             stableConfigChanges: state.stableConfigHistory.length,
             latestStableConfigVersion: state.stableConfigHistory[0]?.version || null,
             stableConfigChainHead: state.stableConfigHistory[0]?.currentHash || null,
+            stableHistoryIntegrity: stableChainVerification.ok ? "pass" : "fail",
+            stableHistoryBreakIndex: stableChainVerification.breakIndex,
+            stableHistoryCheckedCount: stableChainVerification.checkedCount,
+            stableHistoryVerification: stableChainVerification,
           },
         };
       }
@@ -1630,6 +1717,15 @@
           addDiagnostic("export", "high", "Export failed", msg, e);
           setOutput(msg);
         })
+      );
+      document.getElementById("verifyStableChainBtn").addEventListener("click", () =>
+        Promise.resolve()
+          .then(() => runStableChainVerification())
+          .catch((e) => {
+            const msg = readErrorMessage(e);
+            addDiagnostic("stable_chain", "high", "Stable chain verification failed", msg, e);
+            setOutput(msg);
+          })
       );
       document.getElementById("applyPolicyBtn").addEventListener("click", () =>
         applyPolicyConfig().catch((e) => {
