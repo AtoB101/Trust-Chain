@@ -1,0 +1,16 @@
+{
+  "name": "mvp",
+  "version": "1.0.0",
+  "description": "Trust-Chain private BTC paid API MVP",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "demo": "bash ./run-demo.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ethers": "^6.16.0"
+  }
+}
