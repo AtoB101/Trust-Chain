@@ -155,6 +155,32 @@ Result behavior:
   - `checkedCount`
   - `reason` (when failed)
 
+## Evidence integration (M2.7 proof-export extension)
+
+To support compliance/audit handoff, frontend can now export a compact proof JSON
+from the latest offline verification result:
+
+- UI action: `Export stable proof`
+- precondition: at least one successful/failed `Verify from JSON file` run in current session
+
+Proof JSON includes:
+
+- `proofType` (`stable_chain_verification_proof_v1`)
+- `generatedAt`
+- `app`
+- `sourceFile`
+- `verification`:
+  - `ok`
+  - `checkedCount`
+  - `breakIndex`
+  - `reason`
+  - `expectedHash`
+  - `actualHash`
+- `summary`:
+  - `stableConfigVersion`
+  - `stableConfigChainHead`
+  - `stableHistoryIntegrity`
+
 ## Suggested rollout
 
 1. Deploy with enforcement disabled (default) and set desired `minSettlementAmount`.

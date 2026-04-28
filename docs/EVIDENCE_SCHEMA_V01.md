@@ -133,6 +133,19 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
   - `reason` (nullable)
   - `expectedHash` (nullable)
   - `actualHash` (nullable)
+- `importedStableProofReport` (object; exportable lightweight proof snapshot for legal/audit handoff; nullable)
+  - `proofVersion` (currently `stable-proof-v1`)
+  - `generatedAt` (ISO timestamp)
+  - `source` (`imported_json`)
+  - `fileName`
+  - `recordCount`
+  - `chainHead` (latest `currentHash` in imported history, nullable)
+  - `integrity` (`pass | fail`)
+  - `breakIndex` (nullable)
+  - `checkedCount`
+  - `reason` (nullable)
+  - `expectedHash` (nullable)
+  - `actualHash` (nullable)
 - `stableSettlement`:
   - `enforcementEnabled` (nullable boolean)
   - `minSettlementAmount` (nullable string)

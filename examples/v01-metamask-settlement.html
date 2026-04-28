@@ -433,6 +433,7 @@
           <button id="exportDiagBtn">Download JSON</button>
           <button id="verifyStableChainBtn">Verify stable hash chain</button>
           <button id="verifyStableChainFromFileBtn">Verify from JSON file</button>
+          <button id="exportStableProofBtn">Export stable proof</button>
           <input id="verifyStableChainFileInput" type="file" accept="application/json,.json" style="display: none" />
           <span class="muted">Includes addresses, KPIs, logs, tx history, and quote fields; no private keys.</span>
         </div>
@@ -463,6 +464,8 @@
         stableConfigHistory: [],
         stableConfigVersion: 0,
         importedStableHistoryVerification: null,
+        lastImportedStableChainHead: null,
+        importedStableProofReport: null,
         autoMonitorTimer: null,
         sessionTraceId: null,
       };
@@ -718,12 +721,16 @@
           throw new Error("JSON missing authSnapshot.stableConfigHistory array.");
         }
         const result = verifyStableConfigHistoryChainFromHistory(history);
+        const chainHead = history[0]?.currentHash || null;
         state.importedStableHistoryVerification = {
           source: "imported_json",
           fileName: file.name,
+          recordCount: history.length,
+          chainHead,
           verifiedAt: new Date().toISOString(),
           ...result,
         };
+        state.lastImportedStableChainHead = chainHead;
         addDiagnostic(
           "stable_chain",
           result.ok ? "low" : "high",
@@ -738,6 +745,55 @@
           ...result,
         });
         return result;
+      }
+
+      function buildStableProofReport() {
+        const imported = state.importedStableHistoryVerification;
+        if (!imported) {
+          throw new Error("Run 'Verify from JSON file' first to create proof context.");
+        }
+        return {
+          proofType: "stable_chain_verification_proof_v1",
+          proofVersion: "stable-proof-v1",
+          generatedAt: new Date().toISOString(),
+          app: "TrustChain v0.1 wangcai Console",
+          traceId: state.sessionTraceId || "trace-unset",
+          source: {
+            fileName: imported.fileName || null,
+            sourceType: imported.source || "imported_json",
+          },
+          verification: {
+            ok: Boolean(imported.ok),
+            checkedCount: imported.checkedCount ?? 0,
+            breakIndex: imported.breakIndex ?? null,
+            reason: imported.reason || null,
+            expectedHash: imported.expectedHash || null,
+            actualHash: imported.actualHash || null,
+          },
+          chain: {
+            headHash: imported.chainHead || state.lastImportedStableChainHead || null,
+            recordCount: imported.recordCount ?? null,
+          },
+        };
+      }
+
+      function exportStableProofReport() {
+        const proof = buildStableProofReport();
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const fileName = `trustchain-stable-proof-${stamp}.json`;
+        state.importedStableProofReport = proof;
+        downloadJson(fileName, proof);
+        addDiagnostic(
+          "stable_chain",
+          proof.verification.ok ? "low" : "medium",
+          "Stable proof exported",
+          `Downloaded ${fileName} (ok=${proof.verification.ok}, checked=${proof.verification.checkedCount}).`
+        );
+        setOutput({
+          step: "stable_proof_exported",
+          fileName,
+          ...proof,
+        });
       }
 
       function syncLogKindOptions() {
@@ -1138,6 +1194,7 @@
             stableHistoryCheckedCount: stableChainVerification.checkedCount,
             stableHistoryVerification: stableChainVerification,
             importedStableHistoryVerification: state.importedStableHistoryVerification,
+            importedStableProofReport: state.importedStableProofReport,
           },
         };
       }
@@ -1792,6 +1849,15 @@
             target.value = "";
           });
       });
+      document.getElementById("exportStableProofBtn").addEventListener("click", () =>
+        Promise.resolve()
+          .then(() => exportStableProofReport())
+          .catch((e) => {
+            const msg = readErrorMessage(e);
+            addDiagnostic("stable_chain", "high", "Stable proof export failed", msg, e);
+            setOutput(msg);
+          })
+      );
       document.getElementById("applyPolicyBtn").addEventListener("click", () =>
         applyPolicyConfig().catch((e) => {
           const msg = readErrorMessage(e);
