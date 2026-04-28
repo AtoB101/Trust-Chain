@@ -49,6 +49,26 @@ make quickstart
   CN: 与上面相同，但会加载 `.env` 做环境校验。  
   EN: Same as above, but loads `.env` for env validation.
 
+### 4) Proof verification (frontend SOP)
+
+- `python3 -m http.server 8790`  
+  CN: 启动前端控制台，用于离线验链/验签流程。  
+  EN: Start frontend console for offline chain/signature verification flow.
+
+- Open `http://127.0.0.1:8790/examples/v01-metamask-settlement.html`  
+  CN: 在导出面板依次执行：
+  1) Verify from JSON file  
+  2) Export stable proof  
+  3) (可选) Sign stable proof  
+  4) Verify proof signature  
+  EN: In export panel run:
+  1) Verify from JSON file  
+  2) Export stable proof  
+  3) (optional) Sign stable proof  
+  4) Verify proof signature
+
+- SOP 文档 / SOP doc: `docs/PROOF_VERIFICATION_SOP.md`
+
 ## Direct Script Usage
 
 - `./scripts/dev-up.sh --from-env`
