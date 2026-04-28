@@ -23,6 +23,7 @@ If your shell does not have `python3 -m webbrowser`, open this URL manually:
 
 Quick docs:
 - Fast onboarding: `docs/GET_STARTED.md`
+- Commands cheat sheet: `docs/COMMANDS.md`
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
 - Full ops workflow: `docs/OPENCLOW_V01_DEPLOY_TEST_INSTRUCTIONS.txt`
 - One-shot diagnostics: `make doctor` (text report) / `make doctor-json` (JSON report)

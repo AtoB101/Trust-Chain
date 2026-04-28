@@ -166,3 +166,8 @@ http://127.0.0.1:8790/examples/v01-metamask-settlement.html
 2. Connect Wallet
 3. Run Health Check
 4. Batch control（可选）
+
+---
+
+Full command cheatsheet / 完整命令速查：
+- `docs/COMMANDS.md`
