@@ -39,6 +39,8 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
 - `latestStableOperator` (latest stable config operator label; nullable, expected in M2.3+)
 - `stableConfigHistory[]` (stable settlement config change log; expected in M2.2+)
   - `version` (monotonic integer, starts from 1 in current session)
+  - `prevHash` (hash pointer to previous history item hash; genesis uses `0x0`)
+  - `currentHash` (hash of canonicalized current history item)
   - `traceId`
   - `timestamp`
   - `action` (`apply_profile | set_token_rule`)
@@ -117,6 +119,7 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
 - `latestStableRiskTitle`
 - `stableConfigChanges` (count of stable config changes captured in current evidence)
 - `latestStableConfigVersion` (latest stable config history version; nullable)
+- `stableConfigChainHead` (latest stable history `currentHash`; nullable)
 - `stableSettlement`:
   - `enforcementEnabled` (nullable boolean)
   - `minSettlementAmount` (nullable string)

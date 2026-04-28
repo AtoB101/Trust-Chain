@@ -91,6 +91,34 @@ This allows audit/support to answer:
 - Was the configured amount above minimum threshold?
 - Did stable settlement constraints contribute to readiness outcome?
 
+## Evidence integration (M2.4 hash-chain extension)
+
+To strengthen tamper-evidence for local operation history, each stable config history item now
+includes chained digests:
+
+- `prevHash` (hash pointer to previous history record in this session; `null` on first record)
+- `currentHash` (hash of canonicalized record content including `prevHash`)
+
+Hashing rules in current frontend implementation:
+
+- algorithm: `keccak256`
+- input encoding: UTF-8 bytes of canonical JSON payload
+- canonical payload keys:
+  - `version`
+  - `traceId`
+  - `timestamp`
+  - `action`
+  - `reason`
+  - `operator`
+  - `tokenAddress`
+  - `tokenAllowed`
+  - `enforcementEnabled`
+  - `minSettlementAmount`
+  - `txHashes`
+  - `prevHash`
+
+This enables quick integrity checks across exported history items by recomputing hashes in order.
+
 ## Suggested rollout
 
 1. Deploy with enforcement disabled (default) and set desired `minSettlementAmount`.

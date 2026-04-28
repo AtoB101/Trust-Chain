@@ -583,11 +583,32 @@
 
       function addStableConfigHistory(entry) {
         state.stableConfigVersion += 1;
-        state.stableConfigHistory.unshift({
+        const previousHash = state.stableConfigHistory[0]?.currentHash || "0x0";
+        const normalizedEntry = {
           version: state.stableConfigVersion,
           traceId: state.sessionTraceId || "trace-unset",
           timestamp: new Date().toISOString(),
           ...entry,
+        };
+        const hashPayload = JSON.stringify({
+          prevHash: previousHash,
+          version: normalizedEntry.version,
+          traceId: normalizedEntry.traceId,
+          timestamp: normalizedEntry.timestamp,
+          action: normalizedEntry.action || null,
+          reason: normalizedEntry.reason || null,
+          operator: normalizedEntry.operator || null,
+          tokenAddress: normalizedEntry.tokenAddress || null,
+          tokenAllowed: normalizedEntry.tokenAllowed ?? null,
+          enforcementEnabled: normalizedEntry.enforcementEnabled ?? null,
+          minSettlementAmount: normalizedEntry.minSettlementAmount || null,
+          txHashes: normalizedEntry.txHashes || null,
+        });
+        const currentHash = keccak256(toUtf8Bytes(hashPayload));
+        state.stableConfigHistory.unshift({
+          ...normalizedEntry,
+          prevHash: previousHash,
+          currentHash,
         });
         state.stableConfigHistory = state.stableConfigHistory.slice(0, 40);
       }
@@ -935,6 +956,8 @@
             stableConfigVersion: state.stableConfigVersion,
             latestStableChangeReason: state.stableConfigHistory[0]?.reason || null,
             latestStableOperator: state.stableConfigHistory[0]?.operator || null,
+            latestStablePrevHash: state.stableConfigHistory[0]?.prevHash || null,
+            latestStableCurrentHash: state.stableConfigHistory[0]?.currentHash || null,
             stableConfigHistory: state.stableConfigHistory,
           },
           requestSnapshot: {
@@ -981,6 +1004,7 @@
               state.diagnostics.find((d) => d.kind === "stable_settlement" && d.severity === "high")?.title || null,
             stableConfigChanges: state.stableConfigHistory.length,
             latestStableConfigVersion: state.stableConfigHistory[0]?.version || null,
+            stableConfigChainHead: state.stableConfigHistory[0]?.currentHash || null,
           },
         };
       }
