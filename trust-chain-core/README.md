@@ -1,0 +1,47 @@
+# trust-chain-core (Public)
+
+This public repository exposes the verifiable settlement protocol baseline:
+
+- core smart contracts
+- public interfaces
+- basic SDK interfaces/mocks
+- minimal runnable demos
+- public documentation
+
+Commercial strategy logic is intentionally excluded and belongs in `trust-chain-engine` (private).
+
+## Public Scope
+
+- `contracts/`: base settlement lifecycle and protocol interfaces
+- `sdk/basic/`: public SDK types/interfaces and mock adapters
+- `docs/public/`: open documentation only
+- `examples/`: minimal demo usage
+
+## Quick Start
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+forge build
+forge test -q
+```
+
+Frontend demo:
+
+```bash
+python3 -m http.server 8787
+```
+
+Open:
+`http://127.0.0.1:8787/examples/v01-metamask-settlement.html`
+
+## Capability Statement (No Internal Details)
+
+The protocol supports:
+
+- risk checks via pluggable engine interface
+- settlement optimization via pluggable optimizer interface
+- enterprise controls via external enterprise modules
+- data analysis via external analytics modules
+
+Internal decision rules, scoring formulas, route strategies, optimization models, and enterprise backend logic are not in this public repository.
