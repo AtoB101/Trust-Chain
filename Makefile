@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch
+.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema
 
 help:
 	@echo "Available targets:"
@@ -13,6 +13,7 @@ help:
 	@echo "  make proof-sop-checklist   # generate proof verification SOP record template"
 	@echo "  make verify-proof-index    # verify manifest digest in latest support bundle"
 	@echo "  make verify-proof-index-batch # batch verify manifests under results/"
+	@echo "  make validate-evidence-schema # validate exported diagnosis JSON schema compatibility"
 
 quickstart:
 	@./scripts/dev-up.sh --from-env
@@ -51,3 +52,11 @@ verify-proof-index:
 
 verify-proof-index-batch:
 	@./scripts/verify-proof-index-batch.sh --dir results --glob "support-bundle-*.zip"
+
+validate-evidence-schema:
+	@LATEST_JSON=$$(ls -t results/trustchain-v01-diagnosis-*.json 2>/dev/null | head -n 1); \
+	if [[ -z "$$LATEST_JSON" ]]; then \
+	  echo "No diagnosis JSON found in results/. Export one from frontend first."; \
+	  exit 1; \
+	fi; \
+	./scripts/validate-evidence-schema.sh --path "$$LATEST_JSON"

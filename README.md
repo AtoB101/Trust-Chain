@@ -29,8 +29,10 @@ Quick docs:
 - Full ops workflow: `docs/OPENCLOW_V01_DEPLOY_TEST_INSTRUCTIONS.txt`
 - One-shot diagnostics: `make doctor` (text report) / `make doctor-json` (JSON report)
 - Support bundle zip: `make support-bundle` (collects doctor reports + key artifacts)
+- Evidence schema check: `make validate-evidence-schema` (validates latest diagnosis JSON compatibility)
 - Local CI gate: `make ci-local` (build + focused core tests, no env required)
 - Env-aware CI gate: `make ci-local-env` (includes preflight with `.env`)
+- M4 roadmap: `docs/M4_ROADMAP_V01.md`
 
 ## Core Modules
 

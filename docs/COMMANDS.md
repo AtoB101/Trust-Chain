@@ -47,6 +47,10 @@ make quickstart
   CN: 批量校验目录下所有 support-bundle 的 `manifestDigest`，支持失败阈值、时间范围、最小样本量与最近通过时效门槛。  
   EN: Batch-verify support-bundle manifest digests with fail-threshold, time-window, minimum-sample, and recent-pass policies.
 
+- `make validate-evidence-schema`  
+  CN: 校验最新 diagnosis JSON 的证据结构版本与关键字段兼容性。  
+  EN: Validate schema-version compatibility and required fields in latest diagnosis JSON.
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -108,6 +112,7 @@ make quickstart
 - `./scripts/ci-local.sh`
 - `./scripts/ci-local.sh --from-env`
 - `./scripts/proof-sop-checklist.sh --operator <name> --reviewer <name> --ticket <id>`
+- `./scripts/validate-evidence-schema.sh --path results/trustchain-v01-diagnosis-<timestamp>.json`
 
 ## Frontend URL
 
