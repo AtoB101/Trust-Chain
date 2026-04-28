@@ -86,8 +86,8 @@ make quickstart
   EN: Aggregate commercialization/patrol/guardian/contract status into a system health snapshot.
 
 - `make ops-summary`  
-  CN: 一条命令生成运维摘要（自动刷新关键产物并输出总体健康结论）。  
-  EN: One-command operational summary (refreshes core artifacts and prints overall health verdict).
+  CN: 一条命令生成运维摘要（自动刷新关键产物，输出总体健康、告警级别与 runbook 建议）。  
+  EN: One-command operational summary (refreshes core artifacts and prints health, alert level, and runbook actions).
 
 ### 3) Local CI checks
 
@@ -209,6 +209,7 @@ make quickstart
 - `./scripts/system-status.sh --format text`
 - `./scripts/system-status.sh --format json --output results/system-status-latest.json`
 - `./scripts/ops-summary.sh`
+- `./scripts/system-status.sh --format json | jq '.summary,.runbook'`
 - `./scripts/api_server.py --host 127.0.0.1 --port 8811 --token dev-token`
 - `./scripts/api-smoke.sh --host 127.0.0.1 --port 8811 --token dev-token`
 

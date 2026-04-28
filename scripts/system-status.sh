@@ -128,14 +128,43 @@ else:
     overall = "critical"
 status["summary"]["overall"] = overall
 
+runbook = []
+severity = "info"
+if not status["summary"]["commercialReady"]:
+    severity = "critical"
+    runbook.append("Run: make commercialization-gate -- investigate MUST failures first.")
+if not status["summary"]["patrolHealthy"]:
+    severity = "high" if severity != "critical" else severity
+    runbook.append("Run: make proof-patrol and inspect proof-patrol-alert-latest.json reasonSummary.")
+if not status["summary"]["contractsHealthy"]:
+    severity = "high" if severity != "critical" else severity
+    runbook.append("Run: make validate-output-contracts and patch producers missing required fields.")
+guardian_overall = ((guardian or {}).get("riskAssessment") or {}).get("overall")
+if guardian_overall == "fail":
+    severity = "critical"
+    runbook.append("Run: make agent-safety-guardian and triage newRisks by severity immediately.")
+elif guardian_overall == "warning" and severity not in {"critical", "high"}:
+    severity = "medium"
+    runbook.append("Review guardian warning risks and tighten patrol profile if trend worsens.")
+
+if not runbook:
+    runbook.append("Status healthy. Continue periodic patrol and contract validation cadence.")
+
+status["summary"]["alertSeverity"] = severity
+status["summary"]["nextActions"] = runbook
+
 out.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
 
 if fmt == "json":
     print(json.dumps(status, indent=2))
 else:
     print(f"overall: {overall}")
+    print(f"alertSeverity: {status['summary']['alertSeverity']}")
     print(f"commercialReady: {status['summary']['commercialReady']}")
     print(f"patrolHealthy: {status['summary']['patrolHealthy']}")
     print(f"contractsHealthy: {status['summary']['contractsHealthy']}")
+    print("nextActions:")
+    for idx, step in enumerate(status["summary"]["nextActions"], start=1):
+        print(f"  {idx}. {step}")
     print(f"output: {out}")
 PY
