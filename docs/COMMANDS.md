@@ -54,6 +54,9 @@ make quickstart
 - `make ci-proof-gates`  
   CN: 运行 M4.1 的证据/索引门禁（schema 兼容 + proof-index 批量策略）。  
   EN: Run M4.1 proof gates (schema compatibility + batch proof-index policies).
+- `make ci-proof-gate`  
+  CN: `make ci-proof-gates` 的兼容别名（便于旧脚本调用）。  
+  EN: Compatibility alias of `make ci-proof-gates` for legacy automation.
 
 - `make proof-patrol`  
   CN: 按巡检策略（strict/balanced/lenient）执行 proof-index 巡检并输出告警 JSON。  
@@ -62,6 +65,9 @@ make quickstart
 - `make agent-safety-guardian`  
   CN: 运行全链路 Agent 安全管家（自检 + 证据兼容 + proof 巡检 + 风险分级登记）。  
   EN: Run end-to-end Agent safety guardian (self-check + evidence compatibility + proof patrol + risk registry).
+- `make guardian`  
+  CN: `make agent-safety-guardian` 的兼容别名（便于旧脚本调用）。  
+  EN: Compatibility alias of `make agent-safety-guardian` for legacy automation.
 
 - `make rule-gap-adversarial-sim`  
   CN: 运行规则漏洞对抗模拟，生成“利用规则”攻击场景与风险评分报告。  

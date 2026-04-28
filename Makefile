@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates proof-patrol agent-safety-guardian rule-gap-adversarial-sim
+.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates ci-proof-gate proof-patrol agent-safety-guardian guardian rule-gap-adversarial-sim
 
 help:
 	@echo "Available targets:"
@@ -15,8 +15,10 @@ help:
 	@echo "  make verify-proof-index-batch # batch verify manifests under results/"
 	@echo "  make validate-evidence-schema # validate exported diagnosis JSON schema compatibility"
 	@echo "  make ci-proof-gates          # run M4.1 proof/evidence CI gate checks"
+	@echo "  make ci-proof-gate           # alias of ci-proof-gates"
 	@echo "  make proof-patrol            # run M4.2 scheduled patrol profile (strict by default)"
 	@echo "  make agent-safety-guardian   # run end-to-end safety guardian (self-check + risk registry)"
+	@echo "  make guardian                # alias of agent-safety-guardian"
 	@echo "  make rule-gap-adversarial-sim # run rule-exploit adversarial simulation scenarios"
 
 quickstart:
@@ -68,11 +70,17 @@ validate-evidence-schema:
 ci-proof-gates:
 	@./scripts/ci-proof-gates.sh
 
+ci-proof-gate: ci-proof-gates
+	@:
+
 proof-patrol:
 	@./scripts/proof-patrol.sh --profile strict --batch-output results/proof-patrol-batch-latest.json --alert-output results/proof-patrol-alert-latest.json
 
 agent-safety-guardian:
 	@./scripts/agent-safety-guardian.sh --profile balanced
+
+guardian: agent-safety-guardian
+	@:
 
 rule-gap-adversarial-sim:
 	@./scripts/rule-gap-adversarial-sim.sh
