@@ -209,6 +209,10 @@ Optional policy controls for CI/ops:
 - `--since/--until`: filter bundles by timestamp in filename (`support-bundle-YYYYmmddTHHMMSSZ.zip`), supports compact and ISO8601 input.
 - `--min-total N`: fail when matched sample size is less than `N`.
 - `--require-recent-pass H`: fail when latest passing bundle is older than `H` hours (UTC).
+- CI gate wrapper:
+  - `./scripts/ci-proof-gates.sh` runs:
+    1) evidence schema validation on `docs/samples/trustchain-evidence-sample-v1.json`
+    2) batch proof-index verification with strict policy profile (`--strict --max-fail 0 --min-total 1 --require-recent-pass 24`)
 - batch summary fields:
   - `reasonSummary`: fail reasons grouped by count
   - `latestPassAt`: latest bundle stamp among pass rows (if present)

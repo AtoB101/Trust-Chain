@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema
+.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates
 
 help:
 	@echo "Available targets:"
@@ -14,6 +14,7 @@ help:
 	@echo "  make verify-proof-index    # verify manifest digest in latest support bundle"
 	@echo "  make verify-proof-index-batch # batch verify manifests under results/"
 	@echo "  make validate-evidence-schema # validate exported diagnosis JSON schema compatibility"
+	@echo "  make ci-proof-gates          # run M4.1 proof/evidence CI gate checks"
 
 quickstart:
 	@./scripts/dev-up.sh --from-env
@@ -60,3 +61,6 @@ validate-evidence-schema:
 	  exit 1; \
 	fi; \
 	./scripts/validate-evidence-schema.sh --path "$$LATEST_JSON"
+
+ci-proof-gates:
+	@./scripts/ci-proof-gates.sh

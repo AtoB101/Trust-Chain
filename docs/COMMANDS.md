@@ -51,6 +51,10 @@ make quickstart
   CN: 校验最新 diagnosis JSON 的证据结构版本与关键字段兼容性。  
   EN: Validate schema-version compatibility and required fields in latest diagnosis JSON.
 
+- `make ci-proof-gates`  
+  CN: 运行 M4.1 的证据/索引门禁（schema 兼容 + proof-index 批量策略）。  
+  EN: Run M4.1 proof gates (schema compatibility + batch proof-index policies).
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -111,6 +115,8 @@ make quickstart
   - `ok`
 - `./scripts/ci-local.sh`
 - `./scripts/ci-local.sh --from-env`
+- `./scripts/ci-proof-gates.sh`
+- `./scripts/ci-proof-gates.sh --sample docs/samples/trustchain-evidence-sample-v1.json --results-dir results --strict --max-fail 0 --min-total 1 --require-recent-pass 24`
 - `./scripts/proof-sop-checklist.sh --operator <name> --reviewer <name> --ticket <id>`
 - `./scripts/validate-evidence-schema.sh --path results/trustchain-v01-diagnosis-<timestamp>.json`
 

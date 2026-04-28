@@ -37,10 +37,24 @@ Acceptance:
 Target:
 - provide a CI recipe (or script wrapper) that fails PR checks when exported diagnosis JSON violates schema compatibility.
 
-Planned deliverables:
-- reproducible validation command template for CI runners
-- failure reason mapping for quick triage
-- docs section for GitHub Actions / local pre-merge checks
+Deliverables (implemented):
+- CI gate wrapper script:
+  - `scripts/ci-proof-gates.sh`
+  - checks evidence schema marker/required fields via `validate-evidence-schema.sh`
+  - checks proof-index batch policy gates via `verify-proof-index-batch.sh`
+- deterministic sample evidence for CI:
+  - `docs/samples/trustchain-evidence-sample-v1.json`
+- GitHub Actions integration:
+  - `forge-ci.yml` adds `proof-gates` job on PR/workflow_dispatch
+- local parity:
+  - `scripts/ci-local.sh` now runs proof gates by default
+  - `--skip-proof-gates` can bypass for debugging
+  - Make target: `make ci-proof-gates`
+
+Acceptance:
+- PR fails when sample evidence violates schema compatibility.
+- PR fails when batch proof policy gate is violated.
+- local `./scripts/ci-local.sh` and CI gate produce consistent pass/fail behavior.
 
 ### M4.2 — Ops-grade patrol profile
 
