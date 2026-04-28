@@ -81,6 +81,14 @@ make quickstart
   CN: 校验关键 JSON 输出是否包含统一契约字段（`schemaVersion/generatedAt/source/traceId`）。  
   EN: Validate required unified output contract fields (`schemaVersion/generatedAt/source/traceId`) in core JSON artifacts.
 
+- `make system-status`  
+  CN: 聚合商用门禁、巡检、安全管家、契约校验状态，生成系统健康视图。  
+  EN: Aggregate commercialization/patrol/guardian/contract status into a system health snapshot.
+
+- `make ops-summary`  
+  CN: 一条命令生成运维摘要（自动刷新关键产物并输出总体健康结论）。  
+  EN: One-command operational summary (refreshes core artifacts and prints overall health verdict).
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -104,6 +112,10 @@ make quickstart
 - `make ops-commercial-gate`  
   CN: 运行商用准入门禁（分层入口，等价 `make commercialization-gate`）。  
   EN: Run commercial readiness gate (grouped entry, alias of `make commercialization-gate`).
+
+- `make ops-summary`  
+  CN: 运行运维摘要（分层入口，一次输出系统健康概览）。  
+  EN: Run ops summary (grouped entry for one-shot system health overview).
 
 - `make safety-gates`  
   CN: 运行证据/索引门禁（分层入口，等价 `make ci-proof-gates`）。  
@@ -194,6 +206,9 @@ make quickstart
 - `./scripts/commercialization-gate.sh --format json --output results/commercialization-gate-latest.json`
 - `./scripts/validate-output-contracts.sh --format text`
 - `./scripts/validate-output-contracts.sh --format json`
+- `./scripts/system-status.sh --format text`
+- `./scripts/system-status.sh --format json --output results/system-status-latest.json`
+- `./scripts/ops-summary.sh`
 - `./scripts/api_server.py --host 127.0.0.1 --port 8811 --token dev-token`
 - `./scripts/api-smoke.sh --host 127.0.0.1 --port 8811 --token dev-token`
 

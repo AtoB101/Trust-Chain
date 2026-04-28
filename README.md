@@ -38,6 +38,8 @@ Quick docs:
 - Commercial readiness checklist: `docs/COMMERCIAL_READINESS_CHECKLIST_V01.md` (MUST/SHOULD/CAN commercial gate baseline)
 - Command map: `docs/COMMAND_MAP_V01.md` (layered entrypoints: core/ops/safety/api)
 - Data contracts: `docs/DATA_CONTRACTS_V01.md` (shared output schema/version/trace fields)
+- System status: `make system-status` (aggregate commercial/proof/guardian/contracts into one health view)
+- Ops one-shot summary: `make ops-summary` (generate and print a concise operational status snapshot)
 - API roadmap: `docs/API_ROADMAP_V01.md` (ecosystem API landing phases and governance baseline)
 - OpenAPI contract: `openapi/trustchain-v1.yaml` (contract-first API spec for integration teams)
 - API local run: `make api-run` (starts zero-dependency API service at `127.0.0.1:8811`)
