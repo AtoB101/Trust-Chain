@@ -174,9 +174,11 @@ Optional metadata passthrough:
 ```
 
 `proof-index.json` contains:
-- bundle metadata (`generatedAt`, `bundleStamp`, `repoRoot`)
+- bundle metadata (`generatedAt`, `bundleStamp`, `fileCount`)
+- integrity marker:
+  - `manifestDigest` (sha256 over canonical index content excluding `manifestDigest`)
 - per-artifact entries:
   - `path`
-  - `size`
+  - `sizeBytes`
   - `sha256`
 

@@ -123,7 +123,7 @@ cp "$PRELOG" "$BUNDLE_TMP_DIR/"
 [[ -f "${ROOT_DIR}/results/deploy-v01-eth.json" ]] && cp "${ROOT_DIR}/results/deploy-v01-eth.json" "$BUNDLE_TMP_DIR/"
 [[ -f "${ROOT_DIR}/examples/v01-console-config.json" ]] && cp "${ROOT_DIR}/examples/v01-console-config.json" "$BUNDLE_TMP_DIR/"
 
-python3 - "$BUNDLE_TMP_DIR" "$STAMP" <<'PY'
+MANIFEST_DIGEST="$(python3 - "$BUNDLE_TMP_DIR" "$STAMP" <<'PY'
 import datetime as dt
 import hashlib
 import json
@@ -170,8 +170,12 @@ index = {
     "files": files,
 }
 
+canonical = json.dumps(index, sort_keys=True, separators=(",", ":")).encode("utf-8")
+index["manifestDigest"] = hashlib.sha256(canonical).hexdigest()
 (bundle_dir / "proof-index.json").write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+print(index["manifestDigest"])
 PY
+)"
 
 python3 - "$BUNDLE_TMP_DIR" "$OUT_PATH" <<'PY'
 import pathlib
@@ -190,4 +194,5 @@ PY
 
 rm -rf "$BUNDLE_TMP_DIR"
 echo "Support bundle generated: ${OUT_PATH}"
+echo "proof-index manifest digest (sha256): ${MANIFEST_DIGEST}"
 echo "Share this zip file with maintainers for faster troubleshooting."
