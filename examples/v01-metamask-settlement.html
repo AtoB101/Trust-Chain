@@ -314,6 +314,24 @@
         </p>
         <div id="policySnapshot" class="hint">Policy snapshot: not loaded</div>
 
+        <h3>Stable settlement profile (M2.0)</h3>
+        <div class="grid">
+          <label for="stableEnforcementEnabled">Enforce stable token allowlist</label>
+          <input id="stableEnforcementEnabled" type="checkbox" style="width: auto" />
+
+          <label for="stableMinAmount">Minimum settlement amount</label>
+          <input id="stableMinAmount" type="number" min="0" value="0" />
+
+          <label for="stableTokenRule">Stable token rule</label>
+          <input id="stableTokenRule" placeholder="0x... (optional)" />
+        </div>
+        <p style="margin-top: 10px">
+          <button id="applyStableProfileBtn">Apply stable profile</button>
+          <button id="refreshStableProfileBtn">Refresh stable profile</button>
+          <button id="setStableTokenRuleBtn">Set stable token rule</button>
+        </p>
+        <div id="stableSettlementSnapshot" class="hint">Stable profile snapshot: not loaded</div>
+
         <h3>Batch control (Non-custodial)</h3>
         <div class="grid">
           <label for="batchIdInput">Batch ID</label>
@@ -446,6 +464,12 @@
         "function isAccountConsistent(address user,address token) view returns (bool)",
         "function batchModeEnabled() view returns (bool)",
         "function batchCircuitBreakerPaused() view returns (bool)",
+        "function stableTokenEnforcementEnabled() view returns (bool)",
+        "function minSettlementAmount() view returns (uint256)",
+        "function setStableTokenEnforcement(bool enabled)",
+        "function setStableTokenAllowed(address token,bool allowed)",
+        "function isStableTokenAllowed(address token) view returns (bool)",
+        "function setMinSettlementAmount(uint256 amount)",
         "function setPolicy(bool enabled,uint256 perTxLimit,uint256 dailyLimit,uint256 maxTxPerWindow,uint256 windowSeconds)",
         "function getPolicy(address user) view returns ((uint256 perTxLimit,uint256 dailyLimit,uint256 maxTxPerWindow,uint256 windowSeconds,bool enabled,bool hasPayeeRules,bool hasTokenRules))",
         "function getPolicyUsage(address user) view returns ((uint256 dayStart,uint256 spentToday,uint256 windowStart,uint256 txCountInWindow))",
@@ -1022,6 +1046,74 @@
         });
       }
 
+      async function readStableSettlementState() {
+        if (!state.signer) throw new Error("Connect wallet first");
+        const { nonCustodialAddress } = readInputs();
+        if (!nonCustodialAddress) throw new Error("Non-custodial address required");
+        const tokenAddress = document.getElementById("stableRuleToken").value.trim() || document.getElementById("tokenAddress").value.trim();
+        const nc = new Contract(nonCustodialAddress, nonCustodialAbi, state.signer);
+        const [enforcementEnabled, minSettlementAmount] = await Promise.all([
+          nc.stableTokenEnforcementEnabled(),
+          nc.minSettlementAmount(),
+        ]);
+        let tokenAllowed = null;
+        if (tokenAddress) tokenAllowed = await nc.isStableTokenAllowed(tokenAddress);
+
+        const snapshotText =
+          `Stable settlement: enforcement=${enforcementEnabled}, minAmount=${minSettlementAmount.toString()}, checkToken=${tokenAddress || "-"}, tokenAllowed=${tokenAllowed}`;
+        const snapshotEl = document.getElementById("stableProfileSnapshot");
+        if (snapshotEl) snapshotEl.textContent = snapshotText;
+
+        setOutput({
+          step: "stable_settlement_read",
+          enforcementEnabled,
+          minSettlementAmount: minSettlementAmount.toString(),
+          checkToken: tokenAddress || null,
+          tokenAllowed,
+        });
+        addDiagnostic("stable_settlement", "low", "Stable settlement loaded", snapshotText);
+      }
+
+      async function applyStableSettlementConfig() {
+        if (!state.signer) throw new Error("Connect wallet first");
+        const { nonCustodialAddress } = readInputs();
+        if (!nonCustodialAddress) throw new Error("Non-custodial address required");
+        const enforcementEnabled = Boolean(document.getElementById("stableEnforcementEnabled").checked);
+        const minSettlementAmount = BigInt(document.getElementById("stableMinAmount").value || "0");
+        const tokenAddress = document.getElementById("stableRuleToken").value.trim() || document.getElementById("tokenAddress").value.trim();
+        const tokenAllowed = Boolean(document.getElementById("stableTokenAllowed").checked);
+        const nc = new Contract(nonCustodialAddress, nonCustodialAbi, state.signer);
+
+        const tx1 = await nc.setStableTokenEnforcement(enforcementEnabled);
+        const r1 = await tx1.wait();
+        const tx2 = await nc.setMinSettlementAmount(minSettlementAmount);
+        const r2 = await tx2.wait();
+        let r3 = null;
+        if (tokenAddress) {
+          const tx3 = await nc.setStableTokenAllowed(tokenAddress, tokenAllowed);
+          r3 = await tx3.wait();
+        }
+
+        addDiagnostic(
+          "stable_settlement",
+          "low",
+          "Stable settlement updated",
+          `enforcement=${enforcementEnabled}, minAmount=${minSettlementAmount.toString()}, token=${tokenAddress || "-"}, tokenAllowed=${tokenAddress ? tokenAllowed : "skipped"}`
+        );
+        setOutput({
+          step: "stable_settlement_updated",
+          enforcementEnabled,
+          minSettlementAmount: minSettlementAmount.toString(),
+          tokenAddress: tokenAddress || null,
+          tokenAllowed: tokenAddress ? tokenAllowed : null,
+          txHashes: {
+            enforcement: r1.hash,
+            minAmount: r2.hash,
+            tokenRule: r3?.hash || null,
+          },
+        });
+      }
+
       async function loadLocalConfig() {
         const response = await fetch("./v01-console-config.json", { cache: "no-store" });
         if (!response.ok) throw new Error("Config not found: examples/v01-console-config.json");
@@ -1069,9 +1161,32 @@
           updateKpi("kpiAllowlist", "N/A (non-custodial)", "status-warn");
         }
 
+        let stableProfile = null;
+        if (nonCustodialAddress) {
+          try {
+            const ncStable = new Contract(nonCustodialAddress, nonCustodialAbi, state.signer);
+            const [enforcementEnabled, minSettlementAmount] = await Promise.all([
+              ncStable.stableTokenEnforcementEnabled(),
+              ncStable.minSettlementAmount(),
+            ]);
+            const stableTokenAllowed = tokenAddress ? await ncStable.isStableTokenAllowed(tokenAddress) : null;
+            stableProfile = {
+              enforcementEnabled,
+              minSettlementAmount,
+              stableTokenAllowed,
+            };
+          } catch (e) {
+            addDiagnostic("stable_settlement", "medium", "Stable profile read failed", readErrorMessage(e), e);
+          }
+        }
         const enoughBalance = balance >= amount;
         const enoughAllowance = allowance >= amount;
-        const ready = (engineAddress ? (!paused && tokenAllowed) : true) && enoughBalance && enoughAllowance;
+        const stableRulePass = !stableProfile
+          || (
+            (!stableProfile.enforcementEnabled || Boolean(stableProfile.stableTokenAllowed))
+            && amount >= BigInt(stableProfile.minSettlementAmount?.toString?.() || "0")
+          );
+        const ready = (engineAddress ? (!paused && tokenAllowed) : true) && enoughBalance && enoughAllowance && stableRulePass;
         updateKpi("kpiReadiness", ready ? "Ready" : "Blocked", ready ? "status-good" : "status-bad");
 
         if (nonCustodialAddress) {
@@ -1096,6 +1211,14 @@
               "Non-custodial state",
               `locked=${acct.locked}, active=${acct.active}, reserved=${acct.reserved}, invariant=${isConsistent}, batchMode=${batchModeEnabled}, breakerPaused=${batchCircuitBreakerPaused}`
             );
+            if (stableProfile) {
+              addDiagnostic(
+                "stable_settlement",
+                stableRulePass ? "low" : "high",
+                "Stable settlement profile",
+                `enforcement=${stableProfile.enforcementEnabled}, minAmount=${stableProfile.minSettlementAmount.toString()}, tokenAllowed=${stableProfile.stableTokenAllowed}`
+              );
+            }
           } catch (e) {
             updateKpi("kpiInvariant", "READ FAIL", "status-warn");
             setChip("modeCustodyChip", "Mode: Non-custodial?");
@@ -1387,6 +1510,30 @@
           const msg = readErrorMessage(e);
           const c = classifyRuntimeError(e);
           addDiagnostic(c.kind, c.severity, `Set token rule: ${c.title}`, msg, e);
+          setOutput(msg);
+        })
+      );
+      document.getElementById("applyStableProfileBtn").addEventListener("click", () =>
+        applyStableSettlementConfig().catch((e) => {
+          const msg = readErrorMessage(e);
+          const c = classifyRuntimeError(e);
+          addDiagnostic(c.kind, c.severity, `Apply stable profile: ${c.title}`, msg, e);
+          setOutput(msg);
+        })
+      );
+      document.getElementById("refreshStableProfileBtn").addEventListener("click", () =>
+        readStableSettlementState().catch((e) => {
+          const msg = readErrorMessage(e);
+          const c = classifyRuntimeError(e);
+          addDiagnostic(c.kind, c.severity, `Refresh stable profile: ${c.title}`, msg, e);
+          setOutput(msg);
+        })
+      );
+      document.getElementById("setStableTokenRuleBtn").addEventListener("click", () =>
+        setStableTokenRule().catch((e) => {
+          const msg = readErrorMessage(e);
+          const c = classifyRuntimeError(e);
+          addDiagnostic(c.kind, c.severity, `Set stable token rule: ${c.title}`, msg, e);
           setOutput(msg);
         })
       );
