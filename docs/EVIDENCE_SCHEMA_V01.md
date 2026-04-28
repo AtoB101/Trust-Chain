@@ -34,6 +34,21 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
 - `signaturePresent`
 - `quotePresent`
 - `stableSettlementSnapshot` (string snapshot shown in UI; optional in M1, expected in M2.1+)
+- `stableConfigVersion` (current local stable config history version counter; expected in M2.3+)
+- `latestStableChangeReason` (latest stable config change reason; nullable, expected in M2.3+)
+- `latestStableOperator` (latest stable config operator label; nullable, expected in M2.3+)
+- `stableConfigHistory[]` (stable settlement config change log; expected in M2.2+)
+  - `version` (monotonic integer, starts from 1 in current session)
+  - `traceId`
+  - `timestamp`
+  - `action` (`apply_profile | set_token_rule`)
+  - `reason` (operator-provided reason text; expected in M2.3+)
+  - `operator` (operator label; expected in M2.3+)
+  - `tokenAddress` (nullable)
+  - `tokenAllowed` (nullable boolean)
+  - `enforcementEnabled` (optional boolean)
+  - `minSettlementAmount` (optional string)
+  - `txHashes` (object with tx hash fields present for the performed action)
 
 ## requestSnapshot
 
@@ -99,6 +114,9 @@ The goal is to keep support/audit parsers stable while M2 adds new fields.
 - `summary.medium`
 - `summary.low`
 - `latestHighRiskTitle`
+- `latestStableRiskTitle`
+- `stableConfigChanges` (count of stable config changes captured in current evidence)
+- `latestStableConfigVersion` (latest stable config history version; nullable)
 - `stableSettlement`:
   - `enforcementEnabled` (nullable boolean)
   - `minSettlementAmount` (nullable string)

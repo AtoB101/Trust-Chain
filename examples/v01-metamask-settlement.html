@@ -324,6 +324,15 @@
 
           <label for="stableTokenRule">Stable token rule</label>
           <input id="stableTokenRule" placeholder="0x... (optional)" />
+
+          <label for="stableTokenAllowed">Stable token allowed</label>
+          <input id="stableTokenAllowed" type="checkbox" style="width: auto" checked />
+
+          <label for="stableChangeReason">Change reason</label>
+          <input id="stableChangeReason" placeholder="e.g. add USDC policy" />
+
+          <label for="stableOperator">Operator label</label>
+          <input id="stableOperator" placeholder="e.g. alice@ops" />
         </div>
         <p style="margin-top: 10px">
           <button id="applyStableProfileBtn">Apply stable profile</button>
@@ -449,6 +458,7 @@
         diagnostics: [],
         txHistory: [],
         stableConfigHistory: [],
+        stableConfigVersion: 0,
         autoMonitorTimer: null,
         sessionTraceId: null,
       };
@@ -572,7 +582,9 @@
       }
 
       function addStableConfigHistory(entry) {
+        state.stableConfigVersion += 1;
         state.stableConfigHistory.unshift({
+          version: state.stableConfigVersion,
           traceId: state.sessionTraceId || "trace-unset",
           timestamp: new Date().toISOString(),
           ...entry,
@@ -920,6 +932,9 @@
             signaturePresent: Boolean(state.signature),
             quotePresent: Boolean(state.quote),
             stableSettlementSnapshot: stableSnapshotText,
+            stableConfigVersion: state.stableConfigVersion,
+            latestStableChangeReason: state.stableConfigHistory[0]?.reason || null,
+            latestStableOperator: state.stableConfigHistory[0]?.operator || null,
             stableConfigHistory: state.stableConfigHistory,
           },
           requestSnapshot: {
@@ -965,6 +980,7 @@
             latestStableRiskTitle:
               state.diagnostics.find((d) => d.kind === "stable_settlement" && d.severity === "high")?.title || null,
             stableConfigChanges: state.stableConfigHistory.length,
+            latestStableConfigVersion: state.stableConfigHistory[0]?.version || null,
           },
         };
       }
@@ -1098,7 +1114,7 @@
         if (!state.signer) throw new Error("Connect wallet first");
         const { nonCustodialAddress } = readInputs();
         if (!nonCustodialAddress) throw new Error("Non-custodial address required");
-        const tokenAddress = document.getElementById("stableRuleToken").value.trim() || document.getElementById("tokenAddress").value.trim();
+        const tokenAddress = document.getElementById("stableTokenRule").value.trim() || document.getElementById("tokenAddress").value.trim();
         const nc = new Contract(nonCustodialAddress, nonCustodialAbi, state.signer);
         const [enforcementEnabled, minSettlementAmount] = await Promise.all([
           nc.stableTokenEnforcementEnabled(),
@@ -1109,7 +1125,7 @@
 
         const snapshotText =
           `Stable settlement: enforcement=${enforcementEnabled}, minAmount=${minSettlementAmount.toString()}, checkToken=${tokenAddress || "-"}, tokenAllowed=${tokenAllowed}`;
-        const snapshotEl = document.getElementById("stableProfileSnapshot");
+        const snapshotEl = document.getElementById("stableSettlementSnapshot");
         if (snapshotEl) snapshotEl.textContent = snapshotText;
 
         setOutput({
@@ -1128,8 +1144,10 @@
         if (!nonCustodialAddress) throw new Error("Non-custodial address required");
         const enforcementEnabled = Boolean(document.getElementById("stableEnforcementEnabled").checked);
         const minSettlementAmount = BigInt(document.getElementById("stableMinAmount").value || "0");
-        const tokenAddress = document.getElementById("stableRuleToken").value.trim() || document.getElementById("tokenAddress").value.trim();
+        const tokenAddress = document.getElementById("stableTokenRule").value.trim() || document.getElementById("tokenAddress").value.trim();
         const tokenAllowed = Boolean(document.getElementById("stableTokenAllowed").checked);
+        const changeReason = document.getElementById("stableChangeReason").value.trim() || "manual_update";
+        const operator = document.getElementById("stableOperator").value.trim() || "unknown_operator";
         const nc = new Contract(nonCustodialAddress, nonCustodialAbi, state.signer);
 
         const tx1 = await nc.setStableTokenEnforcement(enforcementEnabled);
@@ -1150,6 +1168,8 @@
         );
         addStableConfigHistory({
           action: "apply_profile",
+          reason: changeReason,
+          operator,
           enforcementEnabled,
           minSettlementAmount: minSettlementAmount.toString(),
           tokenAddress: tokenAddress || null,
@@ -1162,6 +1182,8 @@
         });
         setOutput({
           step: "stable_settlement_updated",
+          reason: changeReason,
+          operator,
           enforcementEnabled,
           minSettlementAmount: minSettlementAmount.toString(),
           tokenAddress: tokenAddress || null,
@@ -1171,6 +1193,40 @@
             minAmount: r2.hash,
             tokenRule: r3?.hash || null,
           },
+        });
+      }
+
+      async function setStableTokenRule() {
+        if (!state.signer) throw new Error("Connect wallet first");
+        const { nonCustodialAddress } = readInputs();
+        if (!nonCustodialAddress) throw new Error("Non-custodial address required");
+        const tokenAddress = document.getElementById("stableTokenRule").value.trim() || document.getElementById("tokenAddress").value.trim();
+        if (!tokenAddress) throw new Error("Stable token address required");
+        const tokenAllowed = Boolean(document.getElementById("stableTokenAllowed").checked);
+        const changeReason = document.getElementById("stableChangeReason").value.trim() || "manual_update";
+        const operator = document.getElementById("stableOperator").value.trim() || "unknown_operator";
+        const nc = new Contract(nonCustodialAddress, nonCustodialAbi, state.signer);
+        const tx = await nc.setStableTokenAllowed(tokenAddress, tokenAllowed);
+        const receipt = await tx.wait();
+        addDiagnostic("stable_settlement", "low", "Stable token rule updated", `token=${tokenAddress}, allowed=${tokenAllowed}`);
+        addStableConfigHistory({
+          action: "set_token_rule",
+          reason: changeReason,
+          operator,
+          tokenAddress,
+          tokenAllowed,
+          txHashes: {
+            tokenRule: receipt.hash,
+          },
+        });
+        setOutput({
+          step: "stable_token_rule_updated",
+          reason: changeReason,
+          operator,
+          tokenAddress,
+          tokenAllowed,
+          txHash: receipt.hash,
+          blockNumber: receipt.blockNumber,
         });
       }
 

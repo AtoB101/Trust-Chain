@@ -66,6 +66,24 @@ Exported diagnosis JSON now carries stable profile context in three places:
 - `requestSnapshot.stableSettlementDecision`
 - `riskSnapshot.stableSettlement`
 
+## Evidence integration (M2.3 extension)
+
+Stable profile change history now includes richer operation metadata under:
+
+- `authSnapshot.stableConfigHistory[]`
+
+Each history item includes:
+
+- `version` (monotonic local version counter in UI session)
+- `action` (for example: `apply_profile`, `set_token_rule`)
+- `reason` (operator-supplied change reason)
+- `operator` (operator label, for example `alice@ops`)
+- `tokenAddress`
+- `tokenAllowed`
+- `enforcementEnabled`
+- `minSettlementAmount`
+- `txHashes` (transaction hash references per change operation)
+
 This allows audit/support to answer:
 
 - Was stable enforcement enabled at operation time?
