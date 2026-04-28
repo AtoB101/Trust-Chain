@@ -101,6 +101,10 @@ make quickstart
   CN: 发版前总门禁（一条命令串行执行：commercialization/proof-gates/patrol/guardian/contracts/system-status/ops-alert，任一失败即阻断）。  
   EN: Pre-release master gate (single command runs commercialization/proof-gates/patrol/guardian/contracts/system-status/ops-alert; any failure blocks release).
 
+- `Security CI workflow` (`.github/workflows/security-ci.yml`)  
+  CN: PR 自动执行 `forge test + slither-gate + release-readiness` 三段阻断，任一失败即阻断合并。  
+  EN: PR auto-runs `forge test + slither-gate + release-readiness`; any failure blocks merge.
+
 ### 3) Local CI checks
 
 - `make ci-local`  
