@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TrustChain v0.1 Settlement Console</title>
+    <title>TrustChain v0.1 wangcai控制台</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -210,28 +210,28 @@
     </style>
   </head>
   <body>
-    <h1>TrustChain v0.1 — 傻瓜式控制台 / Simple Console</h1>
-    <p>只做四步 / Only four steps. 右侧是监测 / Right side = monitoring.</p>
+    <h1>TrustChain v0.1 — wangcai控制台</h1>
+    <p>Only four steps. The right side is monitoring.</p>
 
     <div class="callout">
-      <strong>开始前三件事 / Before you start</strong>
+      <strong>Before you start</strong>
       <ol style="margin: 8px 0 0 18px; padding: 0">
-        <li>链上已有 Non-custodial + Token 地址，且买卖双方已 approve / Have NON_CUSTODIAL + TOKEN; buyer/seller approved.</li>
-        <li>付款钱包有余额并已授权 Engine / Payer has balance + approved the engine.</li>
-        <li>MetaMask 网络与合约一致 / MetaMask network matches the deployment chain.</li>
+        <li>Have NON_CUSTODIAL + TOKEN deployed, and buyer/seller approved.</li>
+        <li>Payer wallet has enough balance and approval.</li>
+        <li>MetaMask network matches the deployment chain.</li>
       </ol>
     </div>
 
     <div class="steps">
-      <div class="step"><strong>① 连接 / Connect</strong>Connect MetaMask</div>
-      <div class="step"><strong>② 体检 / Health</strong>Check lock state, balance, allowance</div>
-      <div class="step"><strong>③ 批次 / Batch</strong>Read/Close/Settle batch</div>
+      <div class="step"><strong>① Connect</strong>Connect MetaMask</div>
+      <div class="step"><strong>② Health</strong>Check lock state, balance, allowance</div>
+      <div class="step"><strong>③ Batch</strong>Read/Close/Settle batch</div>
       <div class="step"><strong>④ Legacy / Optional</strong>Engine sign+submit (optional)</div>
     </div>
 
     <div class="layout">
       <section class="panel">
-        <h2>操作面板 / Action</h2>
+        <h2>Action Panel</h2>
         <div class="grid">
           <label for="nonCustodialAddress">Non-custodial Address</label>
           <input id="nonCustodialAddress" placeholder="0x... (optional)" />
@@ -256,12 +256,12 @@
         </div>
 
         <div class="inline-row" style="margin-top: 8px">
-          <label for="showLegacyToggle" class="muted">显示兼容模式 / Show legacy mode</label>
+          <label for="showLegacyToggle" class="muted">Show legacy mode</label>
           <input id="showLegacyToggle" type="checkbox" style="width: auto" />
         </div>
 
         <details id="legacyConfigSection" class="hidden" style="margin-top: 12px; margin-bottom: 8px">
-          <summary class="muted">Legacy SettlementEngine（可选）/ optional</summary>
+          <summary class="muted">Legacy SettlementEngine (optional)</summary>
           <div class="grid" style="margin-top: 8px">
             <label for="engineAddress">Engine Address (legacy)</label>
             <input id="engineAddress" placeholder="0x... optional" />
@@ -269,21 +269,21 @@
         </details>
 
         <p style="margin-top: 12px">
-          <button id="loadConfigBtn">0) 载入部署配置 / Load config</button>
-          <button id="connectBtn" class="button-primary">① 连接钱包 / Connect</button>
-          <button id="healthBtn">② 一键体检 / Health</button>
-          <button id="buildBtn" class="hidden">③ Legacy签名 / Legacy Sign</button>
-          <button id="submitBtn" class="hidden">④ Legacy提交 / Legacy Submit</button>
+          <button id="loadConfigBtn">0) Load config</button>
+          <button id="connectBtn" class="button-primary">① Connect Wallet</button>
+          <button id="healthBtn">② Run Health Check</button>
+          <button id="buildBtn" class="hidden">③ Legacy Sign</button>
+          <button id="submitBtn" class="hidden">④ Legacy Submit</button>
         </p>
         <div class="inline-row">
-          <button id="toggleAutoBtn">自动监测开/关 / Auto monitor</button>
-          <label for="pollSeconds" class="muted">间隔秒 / Poll (s)</label>
+          <button id="toggleAutoBtn">Auto monitor on/off</button>
+          <label for="pollSeconds" class="muted">Poll (s)</label>
           <input id="pollSeconds" type="number" min="3" value="10" style="width: 88px" />
-          <span id="autoState" class="chip">自动监测: 关 / OFF</span>
+          <span id="autoState" class="chip">Auto monitor: OFF</span>
         </div>
-        <p class="hint">默认走非托管：体检检查锁仓状态、余额、授权、一致性。Legacy Engine 仅在填写 Engine Address 时生效。/ Default non-custodial health checks lock state, balance, allowance, invariant. Legacy Engine works only if Engine Address is set.</p>
+        <p class="hint">Default non-custodial health checks lock state, balance, allowance, and invariant. Legacy Engine works only if Engine Address is set.</p>
 
-        <h3>批次控制 / Batch control (Non-custodial)</h3>
+        <h3>Batch control (Non-custodial)</h3>
         <div class="grid">
           <label for="batchIdInput">Batch ID</label>
           <input id="batchIdInput" type="number" min="1" placeholder="from bill / manual input" />
@@ -292,18 +292,18 @@
           <input id="maxBillsInput" type="number" min="0" value="0" />
         </div>
         <p style="margin-top: 10px">
-          <button id="batchStatusBtn">读取批次 / Read batch</button>
-          <button id="closeBatchBtn">关闭批次 / Close batch</button>
-          <button id="settleBatchBtn">批量结算 / Settle batch</button>
+          <button id="batchStatusBtn">Read batch</button>
+          <button id="closeBatchBtn">Close batch</button>
+          <button id="settleBatchBtn">Settle batch</button>
         </p>
 
-        <h3>输出 / Output</h3>
-        <pre id="output">等待操作… / Waiting…</pre>
+        <h3>Output</h3>
+        <pre id="output">Waiting...</pre>
       </section>
 
       <section class="panel">
-        <h2>监测面板 / Monitoring</h2>
-        <h3>模式状态 / Mode state</h3>
+        <h2>Monitoring Panel</h2>
+        <h3>Mode state</h3>
         <div class="inline-row" style="margin-bottom: 10px">
           <span id="modeCustodyChip" class="chip">Mode: Unknown</span>
           <span id="modeBatchChip" class="chip">Batch: Unknown</span>
@@ -311,53 +311,53 @@
         </div>
         <div class="kpi-grid">
           <div class="kpi">
-            <div class="label">钱包 / Wallet</div>
-            <div id="kpiWallet" class="value status-warn">未连接 / Not connected</div>
+            <div class="label">Wallet</div>
+            <div id="kpiWallet" class="value status-warn">Not connected</div>
           </div>
           <div class="kpi">
-            <div class="label">引擎 / Engine</div>
-            <div id="kpiEngine" class="value status-warn">未知 / Unknown</div>
+            <div class="label">Engine</div>
+            <div id="kpiEngine" class="value status-warn">Unknown</div>
           </div>
           <div class="kpi">
-            <div class="label">代币白名单 / Allowlist</div>
-            <div id="kpiAllowlist" class="value status-warn">未知 / Unknown</div>
+            <div class="label">Allowlist</div>
+            <div id="kpiAllowlist" class="value status-warn">Unknown</div>
           </div>
           <div class="kpi">
-            <div class="label">可结算？/ Ready?</div>
-            <div id="kpiReadiness" class="value status-warn">先体检 / Run health</div>
+            <div class="label">Ready?</div>
+            <div id="kpiReadiness" class="value status-warn">Run health check first</div>
           </div>
         </div>
 
-        <h3>非托管状态 / Non-custodial state</h3>
+        <h3>Non-custodial state</h3>
         <div class="kpi-grid">
           <div class="kpi">
-            <div class="label">锁仓总额 / Locked</div>
+            <div class="label">Locked</div>
             <div id="kpiLocked" class="value status-warn">-</div>
           </div>
           <div class="kpi">
-            <div class="label">活期可用 / Active</div>
+            <div class="label">Active</div>
             <div id="kpiActive" class="value status-warn">-</div>
           </div>
           <div class="kpi">
-            <div class="label">账单占用 / Reserved</div>
+            <div class="label">Reserved</div>
             <div id="kpiReserved" class="value status-warn">-</div>
           </div>
           <div class="kpi">
-            <div class="label">状态一致性 / Invariant</div>
+            <div class="label">Invariant</div>
             <div id="kpiInvariant" class="value status-warn">Unknown</div>
           </div>
         </div>
 
-        <h3>风险提示 / Risk hints</h3>
+        <h3>Risk hints</h3>
         <div id="riskContainer"></div>
 
-        <h3>问题日志（点查看）/ Logs</h3>
+        <h3>Logs (click to view)</h3>
         <div class="inline-row" style="margin-bottom: 8px">
-          <label for="logFilterKind" class="muted">类型 / Kind</label>
+          <label for="logFilterKind" class="muted">Kind</label>
           <select id="logFilterKind">
             <option value="all">all</option>
           </select>
-          <label for="logFilterSeverity" class="muted">级别 / Level</label>
+          <label for="logFilterSeverity" class="muted">Level</label>
           <select id="logFilterSeverity">
             <option value="all">all</option>
             <option value="high">high</option>
@@ -367,13 +367,13 @@
         </div>
         <div id="logList" class="log-list"></div>
 
-        <h3>交易记录 / Tx history</h3>
+        <h3>Tx history</h3>
         <div id="txList" class="tx-list"></div>
 
-        <h3>一键导出给支持 / Export JSON</h3>
+        <h3>Export JSON for support</h3>
         <div class="inline-row">
-          <button id="exportDiagBtn">下载诊断包 / Download JSON</button>
-          <span class="muted">含地址、KPI、日志、交易记录、报价字段；不含私钥。/ No private keys.</span>
+          <button id="exportDiagBtn">Download JSON</button>
+          <span class="muted">Includes addresses, KPIs, logs, tx history, and quote fields; no private keys.</span>
         </div>
       </section>
     </div>
@@ -519,7 +519,7 @@
         }
         const list = [...latestByKind.values()].slice(0, 8);
         if (!list.length) {
-          riskContainerEl.innerHTML = `<p class="muted">暂无风险提示，先点「② 一键体检」。/ No hints yet — run Health.</p>`;
+          riskContainerEl.innerHTML = `<p class="muted">No hints yet — run Health.</p>`;
           return;
         }
         riskContainerEl.innerHTML = list
@@ -539,7 +539,7 @@
 
       function renderLogs() {
         if (!state.diagnostics.length) {
-          logListEl.innerHTML = `<div class="muted">暂无日志。/ No logs yet.</div>`;
+          logListEl.innerHTML = `<div class="muted">No logs yet.</div>`;
           return;
         }
         const kindFilter = logFilterKindEl.value || "all";
@@ -548,7 +548,7 @@
           (d) => (kindFilter === "all" || d.kind === kindFilter) && (severityFilter === "all" || d.severity === severityFilter)
         );
         if (!filtered.length) {
-          logListEl.innerHTML = `<div class="muted">当前筛选无匹配日志。/ No logs match filters.</div>`;
+          logListEl.innerHTML = `<div class="muted">No logs match filters.</div>`;
           return;
         }
         logListEl.innerHTML = filtered
@@ -567,7 +567,7 @@
 
       function renderTxHistory() {
         if (!state.txHistory.length) {
-          txListEl.innerHTML = `<div class="muted">暂无链上交易记录。/ No tx history yet.</div>`;
+          txListEl.innerHTML = `<div class="muted">No tx history yet.</div>`;
           return;
         }
         txListEl.innerHTML = state.txHistory
@@ -726,7 +726,7 @@
 
         return {
           reportVersion: "1.0",
-          app: "TrustChain v0.1 Settlement Console",
+          app: "TrustChain v0.1 wangcai控制台",
           exportedAt: new Date().toISOString(),
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
           pageUrl: typeof location !== "undefined" ? location.href : null,
@@ -914,7 +914,7 @@
       }
 
       function setAutoMonitorUi(active) {
-        autoStateEl.textContent = active ? "自动监测: 开 / ON" : "自动监测: 关 / OFF";
+        autoStateEl.textContent = active ? "Auto monitor: ON" : "Auto monitor: OFF";
       }
 
       function toggleAutoMonitor() {
