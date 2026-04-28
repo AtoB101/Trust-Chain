@@ -25,6 +25,7 @@ Quick docs:
 - Fast onboarding: `docs/GET_STARTED.md`
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
 - Full ops workflow: `docs/OPENCLOW_V01_DEPLOY_TEST_INSTRUCTIONS.txt`
+- One-shot diagnostics: `make doctor` (writes `results/doctor-report.txt`)
 
 ## Core Modules
 

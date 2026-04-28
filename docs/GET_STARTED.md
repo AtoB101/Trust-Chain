@@ -56,6 +56,14 @@ If page looks stale:
 - Add timestamp query:
   `...?ts=<epoch>`
 
+If setup still fails, generate diagnostics for support:
+
+```bash
+make doctor
+```
+
+This writes `results/doctor-report.txt`.
+
 If wallet cannot connect:
 - Use `http://` URL (not `file://`)
 - Check MetaMask unlocked and network matches deployed chain
@@ -92,6 +100,14 @@ make quickstart
 - 执行部署
 - 启动前端服务（8790 端口）
 - 输出前端访问地址
+
+如果仍然启动失败，执行：
+
+```bash
+make doctor
+```
+
+会生成 `results/doctor-report.txt`，可以直接发给支持同学排查。
 
 ### 第三步：打开前端
 
