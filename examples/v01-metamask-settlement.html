@@ -448,6 +448,7 @@
         signature: null,
         diagnostics: [],
         txHistory: [],
+        stableConfigHistory: [],
         autoMonitorTimer: null,
         sessionTraceId: null,
       };
@@ -568,6 +569,15 @@
         });
         state.txHistory = state.txHistory.slice(0, 30);
         renderTxHistory();
+      }
+
+      function addStableConfigHistory(entry) {
+        state.stableConfigHistory.unshift({
+          traceId: state.sessionTraceId || "trace-unset",
+          timestamp: new Date().toISOString(),
+          ...entry,
+        });
+        state.stableConfigHistory = state.stableConfigHistory.slice(0, 40);
       }
 
       function syncLogKindOptions() {
@@ -910,6 +920,7 @@
             signaturePresent: Boolean(state.signature),
             quotePresent: Boolean(state.quote),
             stableSettlementSnapshot: stableSnapshotText,
+            stableConfigHistory: state.stableConfigHistory,
           },
           requestSnapshot: {
             form: inputsSerialized,
@@ -953,6 +964,7 @@
               state.diagnostics.find((d) => d.severity === "high")?.title || null,
             latestStableRiskTitle:
               state.diagnostics.find((d) => d.kind === "stable_settlement" && d.severity === "high")?.title || null,
+            stableConfigChanges: state.stableConfigHistory.length,
           },
         };
       }
@@ -1136,6 +1148,18 @@
           "Stable settlement updated",
           `enforcement=${enforcementEnabled}, minAmount=${minSettlementAmount.toString()}, token=${tokenAddress || "-"}, tokenAllowed=${tokenAddress ? tokenAllowed : "skipped"}`
         );
+        addStableConfigHistory({
+          action: "apply_profile",
+          enforcementEnabled,
+          minSettlementAmount: minSettlementAmount.toString(),
+          tokenAddress: tokenAddress || null,
+          tokenAllowed: tokenAddress ? tokenAllowed : null,
+          txHashes: {
+            enforcement: r1.hash,
+            minAmount: r2.hash,
+            tokenRule: r3?.hash || null,
+          },
+        });
         setOutput({
           step: "stable_settlement_updated",
           enforcementEnabled,
