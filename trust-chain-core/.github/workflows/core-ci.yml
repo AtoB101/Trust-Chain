@@ -8,9 +8,54 @@ on:
   workflow_dispatch:
 
 jobs:
+  core-boundary-and-secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+
+      - name: Enforce repository boundary
+        run: |
+          forbidden_paths=(
+            "risk-engine"
+            "settlement-optimizer"
+            "routing-engine"
+            "dispute-engine"
+            "analytics-engine"
+            "enterprise-dashboard"
+            "internal-admin"
+            "data-pipeline"
+            "pricing-strategy"
+          )
+          for p in "${forbidden_paths[@]}"; do
+            if [[ -e "$p" ]]; then
+              echo "Boundary violation: '$p' must not be present in trust-chain-core."
+              exit 1
+            fi
+          done
+          echo "Boundary guard passed."
+
+      - name: Secret pattern guard
+        run: |
+          set +e
+          rg -n --hidden --glob '!.git/**' --glob '!**/.env.example' --glob '!**/docs/public/**' \
+            '(PRIVATE_KEY\s*=|API_KEY\s*=|BEGIN PRIVATE KEY|AKIA[0-9A-Z]{16}|xox[baprs]-|https://.*(infura|alchemy)\.io/v3/[A-Za-z0-9]+)' .
+          code=$?
+          set -e
+          if [[ "$code" -eq 0 ]]; then
+            echo "Potential secret exposure detected."
+            exit 1
+          fi
+          echo "Secret guard passed."
+
   contract-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: core-boundary-and-secrets
 
     steps:
       - name: Checkout
@@ -45,10 +90,34 @@ jobs:
             echo "No contract tests/foundry.toml found, skipping forge test."
           fi
 
-      - name: Validate core repository boundary
+      - name: Validate core repository docs are public-safe
         run: |
-          if rg -n "risk-engine|routing-engine|settlement-optimizer|enterprise-dashboard|internal-admin|pricing-strategy" .; then
-            echo "Boundary violation: private-engine modules should not exist in core repo."
+          if rg -n --glob 'README.md' --glob 'docs/public/**' "scoring formula|weight vector|routing heuristic|internal arbitration policy|profit extraction strategy"; then
+            echo "Public docs include prohibited strategy detail."
             exit 1
           fi
-          echo "Boundary check passed."
+          echo "Public docs guard passed."
+
+  sdk-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: core-boundary-and-secrets
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run SDK checks when package.json exists
+        run: |
+          if [[ -f package.json ]]; then
+            npm ci
+            npm run lint --if-present
+            npm run test --if-present
+            npm run build --if-present
+          else
+            echo "No package.json at root, skipping npm checks."
+          fi

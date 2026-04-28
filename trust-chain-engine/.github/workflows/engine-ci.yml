@@ -3,6 +3,8 @@ name: Engine CI (Private)
 on:
   pull_request:
     branches: ["**"]
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -31,13 +33,41 @@ jobs:
           test -d data-pipeline
           test -d pricing-strategy
 
-      - name: Strategy leakage guard (private should not expose to public docs)
+      - name: Validate interface compatibility manifest (if present)
         run: |
-          if rg -n "publish.*strategy|open source.*strategy detail|publicly disclose.*scoring model" docs internal-admin 2>/dev/null; then
+          manifest="internal-admin/compatibility/interface-compat.json"
+          if [[ -f "$manifest" ]]; then
+            python3 -m json.tool "$manifest" >/dev/null
+            echo "Compatibility manifest is valid JSON."
+          else
+            echo "No compatibility manifest found (recommended path: $manifest)."
+          fi
+
+      - name: Strategy leakage guard (private docs policy)
+        run: |
+          if rg -n -i "公开策略细节|public strategy details|具体评分模型|specific scoring model|具体路由算法|specific routing algorithm|套利识别逻辑|arbitrage detection logic" docs internal-admin 2>/dev/null; then
             echo "Potential documentation leakage policy violation."
             exit 1
           fi
 
-      - name: Placeholder for proprietary test suites
+      - name: Run Python tests when available
         run: |
-          echo "Add internal tests here (risk scoring, routing optimizer, anomaly detection, etc.)"
+          if [[ -f requirements.txt ]]; then
+            python3 -m pip install --upgrade pip
+            python3 -m pip install -r requirements.txt
+          fi
+          if [[ -d tests ]]; then
+            python3 -m pip install pytest
+            pytest -q
+          else
+            echo "No Python tests directory found; skipping pytest."
+          fi
+
+      - name: Run Node tests when available
+        run: |
+          if [[ -f package.json ]]; then
+            npm ci
+            npm test -- --ci
+          else
+            echo "No package.json found; skipping npm test."
+          fi
