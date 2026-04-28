@@ -87,3 +87,34 @@ Acceptance:
 
 - M4.0 focuses on backward compatibility and machine readability, minimizing break risk.
 - M4.1 and M4.2 build on existing M3 scripts and reports instead of replacing them.
+
+## M4.3 — Agent Safety Guardian (self-check + risk registry)
+
+Target:
+- introduce a full-chain safety guardian that continuously records, identifies, and grades risk signals
+  during validation/staging runs, and writes a registry suitable for trend analysis/predictive defense.
+
+Deliverables (implemented):
+- guardian orchestrator script:
+  - `scripts/agent-safety-guardian.sh`
+  - runs:
+    1) local environment doctor self-check (`doctor.sh`)
+    2) proof patrol (`proof-patrol.sh`)
+    3) risk recognition + grading
+    4) risk registry export
+- outputs:
+  - `results/agent-safety-guardian-latest.json`
+  - optional append-only risk register (JSONL), default:
+    - `results/agent-risk-register.jsonl`
+- risk grading model:
+  - `P0`: critical availability/trust threats
+  - `P1`: high-severity policy/signal violations
+  - `P2`: warning-level observability/process gaps
+  - `P3`: informational
+- Make target:
+  - `make agent-safety-guardian`
+
+Acceptance:
+- guardian report contains `findings[]` with risk `id/category/severity/priority/signal`.
+- guardian exits non-zero when any `P0` or `P1` risk is detected.
+- registry entries include `runId`, timestamps, and per-risk metadata for later analytics.

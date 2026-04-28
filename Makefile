@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates proof-patrol
+.PHONY: help quickstart quickstart-skip-deploy preflight doctor doctor-json support-bundle ci-local ci-local-env proof-sop-checklist verify-proof-index verify-proof-index-batch validate-evidence-schema ci-proof-gates proof-patrol agent-safety-guardian
 
 help:
 	@echo "Available targets:"
@@ -16,6 +16,7 @@ help:
 	@echo "  make validate-evidence-schema # validate exported diagnosis JSON schema compatibility"
 	@echo "  make ci-proof-gates          # run M4.1 proof/evidence CI gate checks"
 	@echo "  make proof-patrol            # run M4.2 scheduled patrol profile (strict by default)"
+	@echo "  make agent-safety-guardian   # run end-to-end safety guardian (self-check + risk registry)"
 
 quickstart:
 	@./scripts/dev-up.sh --from-env
@@ -67,4 +68,7 @@ ci-proof-gates:
 	@./scripts/ci-proof-gates.sh
 
 proof-patrol:
-	@./scripts/proof-patrol.sh --profile strict --format json --output results/proof-patrol-latest.json
+	@./scripts/proof-patrol.sh --profile strict --batch-output results/proof-patrol-batch-latest.json --alert-output results/proof-patrol-alert-latest.json
+
+agent-safety-guardian:
+	@./scripts/agent-safety-guardian.sh --profile balanced

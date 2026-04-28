@@ -32,6 +32,7 @@ Quick docs:
 - Evidence schema check: `make validate-evidence-schema` (validates latest diagnosis JSON compatibility)
 - Proof CI gate: `make ci-proof-gates` (schema compatibility + proof-index batch policy checks)
 - Proof patrol profile: `make proof-patrol` (scheduled-style patrol with strict|balanced|lenient policy profiles)
+- Agent safety guardian: `make agent-safety-guardian` (end-to-end self-check + risk grading + risk register ledger)
 - Local CI gate: `make ci-local` (build + focused core tests, no env required)
 - Env-aware CI gate: `make ci-local-env` (includes preflight with `.env`)
 - M4 roadmap: `docs/M4_ROADMAP_V01.md`

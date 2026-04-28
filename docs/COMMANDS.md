@@ -59,6 +59,10 @@ make quickstart
   CN: 按巡检策略（strict/balanced/lenient）执行 proof-index 巡检并输出告警 JSON。  
   EN: Run profile-based proof patrol and emit alert-friendly JSON.
 
+- `make agent-safety-guardian`  
+  CN: 运行全链路 Agent 安全管家（自检 + 证据兼容 + proof 巡检 + 风险分级登记）。  
+  EN: Run end-to-end Agent safety guardian (self-check + evidence compatibility + proof patrol + risk registry).
+
 ### 3) Local CI checks
 
 - `make ci-local`  
@@ -125,6 +129,7 @@ make quickstart
 - `./scripts/validate-evidence-schema.sh --path results/trustchain-v01-diagnosis-<timestamp>.json`
 - `./scripts/proof-patrol.sh --profile strict --dir results --batch-output results/proof-patrol-batch-strict.json --alert-output results/proof-patrol-alert-strict.json`
 - `./scripts/proof-patrol.sh --profile balanced --since "2026-04-28T00:00:00Z" --until "2026-04-28T23:59:59Z"`
+- `./scripts/agent-safety-guardian.sh --profile strict --output results/agent-safety-guardian-strict.json --register results/agent-risk-register.json`
 
 ## Frontend URL
 
