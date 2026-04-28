@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "demo": "bash ./run-demo.sh",
-    "verify": "bash ./verify-first-paid-call.sh"
+    "verify": "bash ./verify-first-paid-call.sh",
+    "simulate": "bash ./simulate-external-user-call.sh"
   },
   "keywords": [],
   "author": "",

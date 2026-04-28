@@ -42,6 +42,24 @@ Open:
 - `GET /api/status`
 - `POST /api/btc-price-paid`
 
+## Simulate external user first paid call
+
+Run one paid call from an "external user" wallet context and print a concise summary:
+
+```bash
+npm run simulate
+```
+
+Or with explicit environment overrides:
+
+```bash
+RPC_URL=http://127.0.0.1:8545 \
+USER_PRIVATE_KEY=<external-user-test-key> \
+PROVIDER_WALLET=<provider-wallet> \
+CHARGE_WEI=1000000000000 \
+./simulate-external-user-call.sh
+```
+
 ## Output logs
 
 Paid call records are appended to:
