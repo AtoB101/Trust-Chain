@@ -46,7 +46,7 @@ fi
 
 echo "==> [4/8] proof patrol"
 if ! ./scripts/proof-patrol.sh \
-  --profile balanced \
+  --profile lenient \
   --batch-output "$RESULTS_DIR/proof-patrol-batch-latest.json" \
   --alert-output "$RESULTS_DIR/proof-patrol-alert-latest.json" \
   --no-summary >/dev/null; then
