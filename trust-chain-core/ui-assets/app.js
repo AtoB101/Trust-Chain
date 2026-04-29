@@ -26,6 +26,10 @@ function buildSeedState() {
       dailyLimit: 5,
       autoConfirm: 0.01,
     },
+    myAgents: [
+      { id: "agent-001", name: "PriceHunter", status: "active", services: 2 },
+      { id: "agent-002", name: "RiskGuard", status: "active", services: 1 },
+    ],
     services: [{ id: "svc-001", name: "Price API", price: 0.01, token: "USDC", status: "active" }],
     bills: [
       {
@@ -34,6 +38,7 @@ function buildSeedState() {
         seller: "MarketDataBot",
         amount: 0.01,
         status: "Settled",
+        payStrategy: "now",
         createdAt: "2026-04-29 08:10",
       },
       {
@@ -42,6 +47,7 @@ function buildSeedState() {
         seller: "SafeScan",
         amount: 0.03,
         status: "Pending",
+        payStrategy: "batch",
         createdAt: "2026-04-29 08:21",
       },
     ],
@@ -184,6 +190,38 @@ function ensureSellerOneClickDeploy() {
   return s;
 }
 
+function ensureDataShape() {
+  const s = getState();
+  if (!Array.isArray(s.myAgents)) {
+    s.myAgents = [{ id: `agent-${Date.now()}`, name: "DefaultAgent", status: "active", services: 1 }];
+  }
+  s.bills = (s.bills || []).map((b) => ({
+    payStrategy: b.payStrategy || (Number(b.amount || 0) >= 0.03 ? "batch" : "now"),
+    ...b,
+  }));
+  saveState(s);
+  return s;
+}
+
+function addMyAgent(name) {
+  const s = ensureDataShape();
+  s.myAgents.unshift({
+    id: `agent-${Date.now()}`,
+    name: String(name || "NewAgent").trim(),
+    status: "active",
+    services: 0,
+  });
+  saveState(s);
+  return s;
+}
+
+function removeMyAgent(agentId) {
+  const s = ensureDataShape();
+  s.myAgents = (s.myAgents || []).filter((a) => a.id !== agentId);
+  saveState(s);
+  return s;
+}
+
 function getBuyerChecklist() {
   const s = getState();
   const b = s.buyer || {};
@@ -246,6 +284,7 @@ function mountDemoScriptGuide() {
 }
 
 maybeResetFromUrl();
+ensureDataShape();
 mountDemoScriptGuide();
 
 window.tcUI = {
@@ -259,4 +298,6 @@ window.tcUI = {
   ensureSellerOneClickDeploy,
   getBuyerChecklist,
   getSellerChecklist,
+  addMyAgent,
+  removeMyAgent,
 };
