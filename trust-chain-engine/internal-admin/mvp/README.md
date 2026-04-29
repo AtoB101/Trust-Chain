@@ -40,9 +40,34 @@ Open:
 
 - `GET /api/health`
 - `GET /api/status`
-- `POST /api/price-paid?symbol=BTCUSDT`
-- `POST /api/price-paid?symbol=ETHUSDC`
+- `POST /api/price-paid` with body `{ "symbol": "BTCUSDT" }`
+- `POST /api/price-paid` with body `{ "symbol": "ETHUSDC" }`
 - Compatibility alias: `POST /api/btc-price-paid` (maps to BTCUSDT)
+
+## Agent wrapTool (author monetization)
+
+Use the private helper to wrap any tool and charge per invocation:
+
+```javascript
+const { wrapTool } = require("./trustchain-wrap-tool");
+
+const wrapped = wrapTool({
+  gatewayBaseUrl: "http://127.0.0.1:8822",
+  userId: "agent-owner-01",
+  price: "0.01",
+  token: "USDC",
+  tool: async ({ symbol }) => ({ symbol }),
+  symbolResolver: (input) => input.symbol,
+});
+```
+
+Run the demo:
+
+```bash
+npm run agent-example
+# with custom symbol
+npm run agent-example -- SOLUSDT
+```
 
 ## External user simulation
 
