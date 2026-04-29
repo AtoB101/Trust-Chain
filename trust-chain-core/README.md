@@ -66,6 +66,28 @@ P0 public UI pages:
 - `http://127.0.0.1:8787/seller/create-service/`
 - `http://127.0.0.1:8787/seller/revenue/`
 
+## GitHub Pages Portal (Test URL first, custom domain later)
+
+A Pages workflow is included at:
+
+- `.github/workflows/pages-portal.yml`
+
+It publishes `trust-chain-core/` as a portal site.
+
+After enabling Pages in repository settings, the portal test URL will be:
+
+- `https://<your-github-username>.github.io/Trust-Chain/`
+
+For custom domain replacement later:
+
+1. copy `trust-chain-core/CNAME.example` to `trust-chain-core/CNAME`
+2. set your real domain in `CNAME`
+3. configure DNS + HTTPS in GitHub Pages settings
+
+Detailed steps:
+
+- `docs/public/GITHUB_PAGES_PORTAL_SETUP.md`
+
 P0 buyer/seller/agent UI demo pages:
 
 - `http://127.0.0.1:8787/buyer/authorize/`
