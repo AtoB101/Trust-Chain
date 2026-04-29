@@ -37,6 +37,8 @@ Open:
 
 Public P0 console entry:
 `http://127.0.0.1:8787/index.html`
+Reset demo data quickly:
+`http://127.0.0.1:8787/index.html?demoReset=1`
 
 P0 public UI pages:
 
