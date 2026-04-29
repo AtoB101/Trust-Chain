@@ -5,8 +5,8 @@ Goal: prove real paid API settlement with one call.
 ## What this MVP shows
 
 1. User balance before call
-2. Agent triggers BTC price API call
-3. API returns BTC price
+2. Agent triggers symbol price API call (e.g. BTCUSDT / ETHUSDC)
+3. API returns symbol price
 4. Automatic on-chain transfer settlement
 5. Transaction hash and balances after call
 
@@ -40,7 +40,9 @@ Open:
 
 - `GET /api/health`
 - `GET /api/status`
-- `POST /api/btc-price-paid`
+- `POST /api/price-paid?symbol=BTCUSDT`
+- `POST /api/price-paid?symbol=ETHUSDC`
+- Compatibility alias: `POST /api/btc-price-paid` (maps to BTCUSDT)
 
 ## External user simulation
 
@@ -82,7 +84,9 @@ Paid call records are appended to:
 
 Each record includes:
 
-- `btcPriceUsd`
+- `symbol`
+- `exchange`
+- `quote`
 - `chargedWei`
 - `txHash`
 - `balances.before/after`
@@ -112,6 +116,24 @@ Optional explicit threshold:
 
 ```bash
 EXPECTED_MIN_CHARGE_WEI=10000000000000 ./verify-first-paid-call.sh
+```
+
+## External user simulation
+
+```bash
+npm run simulate
+```
+
+Optional symbol:
+
+```bash
+./simulate-external-user-call.sh --symbol ETHUSDC
+```
+
+## Demo proof capture
+
+```bash
+npm run proof
 ```
 
 ## Important

@@ -14,6 +14,7 @@ const USER_PRIVATE_KEY = process.env.USER_PRIVATE_KEY || process.env.SETTLEMENT_
 const PROVIDER_WALLET = process.env.PROVIDER_WALLET || process.env.TREASURY_ADDRESS || "";
 const CHARGE_WEI = process.env.CHARGE_WEI || "10000000000000"; // 0.00001 ETH
 const LOG_PATH = process.env.LOG_PATH || path.join(__dirname, "logs", "paid-calls.jsonl");
+const DEFAULT_SYMBOL = (process.env.DEFAULT_SYMBOL || "BTC/USDT").toUpperCase();
 
 function requireEnv() {
   const missing = [];
@@ -41,24 +42,48 @@ function serveStaticIndex(res) {
   res.end(fs.readFileSync(p, "utf-8"));
 }
 
-async function fetchBtcPriceUsd() {
-  const url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
+function normalizeSymbol(raw) {
+  const cleaned = String(raw || DEFAULT_SYMBOL).trim().toUpperCase().replace(/\s+/g, "");
+  const pairCode = cleaned.replace("/", "");
+  if (!/^[A-Z0-9]{6,20}$/.test(pairCode)) {
+    throw new Error(`Invalid symbol format: ${raw}`);
+  }
+  const display = cleaned.includes("/") ? cleaned : `${pairCode.slice(0, pairCode.length - 4)}/${pairCode.slice(-4)}`;
+  return { display, pairCode };
+}
+
+function explorerUrl(chainId, txHash) {
+  if (!txHash) return "";
+  if (chainId === 11155111) return `https://sepolia.etherscan.io/tx/${txHash}`;
+  if (chainId === 1) return `https://etherscan.io/tx/${txHash}`;
+  return `https://explorer.invalid/tx/${txHash}`;
+}
+
+async function fetchPrice(symbol) {
+  const parsed = normalizeSymbol(symbol);
+  // Binance ticker endpoint supports a broad list of exchange pairs.
+  const url = `https://api.binance.com/api/v3/ticker/price?symbol=${parsed.pairCode}`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`Price API failed: ${resp.status}`);
   const obj = await resp.json();
-  const price = obj?.bitcoin?.usd;
-  if (typeof price !== "number") throw new Error("Invalid BTC price response");
-  return price;
+  const price = Number(obj?.price);
+  if (!Number.isFinite(price)) throw new Error("Invalid price response");
+  return {
+    exchange: "binance",
+    symbol: parsed.display,
+    pairCode: parsed.pairCode,
+    price,
+  };
 }
 
-async function runPaidCall(provider, wallet) {
+async function runPaidCall(provider, wallet, symbol, userId) {
   const callId = `call_${Date.now()}`;
   const startedAt = new Date().toISOString();
   const amount = BigInt(CHARGE_WEI);
 
   const userBalanceBefore = await provider.getBalance(wallet.address);
   const providerBalanceBefore = await provider.getBalance(PROVIDER_WALLET);
-  const btcPriceUsd = await fetchBtcPriceUsd();
+  const quote = await fetchPrice(symbol);
 
   const tx = await wallet.sendTransaction({
     to: PROVIDER_WALLET,
@@ -72,14 +97,22 @@ async function runPaidCall(provider, wallet) {
 
   const result = {
     schemaVersion: "trustchain.mvp.paid-call.v1",
+    ok: true,
     callId,
+    userId: String(userId || "external-user"),
     startedAt,
     completedAt,
-    btcPriceUsd,
+    quote: {
+      exchange: quote.exchange,
+      symbol: quote.symbol,
+      pairCode: quote.pairCode,
+      price: quote.price,
+    },
     chargedWei: amount.toString(),
     txHash: receipt.hash,
     chainId: Number(receipt.chainId),
     blockNumber: receipt.blockNumber,
+    explorerUrl: explorerUrl(Number(receipt.chainId), receipt.hash),
     balances: {
       user: {
         beforeWei: userBalanceBefore.toString(),
@@ -89,6 +122,16 @@ async function runPaidCall(provider, wallet) {
         beforeWei: providerBalanceBefore.toString(),
         afterWei: providerBalanceAfter.toString(),
       },
+    },
+    settlement: {
+      chargedWei: amount.toString(),
+      txHash: receipt.hash,
+      chainId: Number(receipt.chainId),
+      explorerUrl: explorerUrl(Number(receipt.chainId), receipt.hash),
+      beforeBalanceWei: userBalanceBefore.toString(),
+      afterBalanceWei: userBalanceAfter.toString(),
+      beforeBalanceEth: ethers.formatEther(userBalanceBefore),
+      afterBalanceEth: ethers.formatEther(userBalanceAfter),
     },
   };
   appendLog(result);
@@ -119,12 +162,41 @@ async function main() {
           userWallet: wallet.address,
           providerWallet: PROVIDER_WALLET,
           chargeWei: CHARGE_WEI,
+          defaultSymbol: DEFAULT_SYMBOL,
+          supportedPriceSource: "binance",
         });
         return;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/btc-price-paid") {
-        const output = await runPaidCall(provider, wallet);
+      if (req.method === "GET" && url.pathname === "/api/config") {
+        json(res, 200, {
+          ok: true,
+          schemaVersion: "trustchain.mvp.config.v1",
+          pricePerCallWei: CHARGE_WEI,
+          pricePerCallEth: ethers.formatEther(CHARGE_WEI),
+          defaultSymbol: DEFAULT_SYMBOL,
+          endpoint: "/api/price-paid",
+        });
+        return;
+      }
+
+      if (req.method === "POST" && (url.pathname === "/api/btc-price-paid" || url.pathname === "/api/price-paid")) {
+        let body = {};
+        let bodyRaw = "";
+        req.on("data", (chunk) => {
+          bodyRaw += chunk;
+        });
+        await new Promise((resolve) => req.on("end", resolve));
+        if (bodyRaw.trim()) {
+          try {
+            body = JSON.parse(bodyRaw);
+          } catch (_) {
+            // Keep empty body; we'll use defaults.
+          }
+        }
+        const symbol = String(body.symbol || url.searchParams.get("symbol") || DEFAULT_SYMBOL);
+        const userId = String(body.userId || "external-user");
+        const output = await runPaidCall(provider, wallet, symbol, userId);
         json(res, 200, output);
         return;
       }

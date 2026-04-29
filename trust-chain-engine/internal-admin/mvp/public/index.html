@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trust-Chain P0 BTC Paid API Demo</title>
+    <title>Trust-Chain P0 Any Pair Paid API Demo</title>
     <style>
       body { font-family: Arial, sans-serif; margin: 24px; max-width: 960px; }
       h1 { margin-bottom: 8px; }
@@ -20,7 +20,7 @@
     </style>
   </head>
   <body>
-    <h1>Trust-Chain P0 Demo: BTC Paid API</h1>
+    <h1>Trust-Chain P0 Demo: Any Pair Paid API</h1>
     <p class="muted">
       Goal: <b>one API call -> one on-chain settlement</b> (no free usage).
     </p>
@@ -31,12 +31,16 @@
           <label>User ID (for trace only)</label>
           <input id="userId" value="demo-user-01" />
         </div>
+        <div class="col">
+          <label>Symbol (exchange pair)</label>
+          <input id="symbol" value="BTCUSDT" />
+        </div>
       </div>
       <p>
         Price per call:
         <code id="priceEth">loading...</code>
       </p>
-      <button id="callBtn">Call BTC API and Auto-Settle</button>
+      <button id="callBtn">Call Price API and Auto-Settle</button>
       <p id="status" class="muted">idle</p>
     </div>
 
@@ -44,7 +48,7 @@
       <h3>Visualized flow</h3>
       <ol>
         <li>Before balance: <code id="beforeBal">-</code></li>
-        <li>Agent/API call: <code id="btcResult">-</code></li>
+        <li>Agent/API call: <code id="priceResult">-</code></li>
         <li>Auto charge tx: <code id="txHash">-</code></li>
         <li>After balance: <code id="afterBal">-</code></li>
       </ol>
@@ -64,11 +68,12 @@
       const priceEthEl = document.getElementById("priceEth");
       const beforeBalEl = document.getElementById("beforeBal");
       const afterBalEl = document.getElementById("afterBal");
-      const btcResultEl = document.getElementById("btcResult");
+      const priceResultEl = document.getElementById("priceResult");
       const txHashEl = document.getElementById("txHash");
       const rawEl = document.getElementById("raw");
       const explorerLinkEl = document.getElementById("explorerLink");
       const userIdEl = document.getElementById("userId");
+      const symbolEl = document.getElementById("symbol");
       const callBtn = document.getElementById("callBtn");
 
       async function init() {
@@ -87,7 +92,8 @@
         callBtn.disabled = true;
         try {
           const userId = (userIdEl.value || "demo-user-01").trim();
-          const resp = await fetch("/api/btc-price-paid", {
+          const symbol = (symbolEl.value || "BTCUSDT").trim().toUpperCase();
+          const resp = await fetch(`/api/price-paid?symbol=${encodeURIComponent(symbol)}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId }),
@@ -102,7 +108,7 @@
 
           beforeBalEl.textContent = `${data.settlement.beforeBalanceEth} ETH`;
           afterBalEl.textContent = `${data.settlement.afterBalanceEth} ETH`;
-          btcResultEl.textContent = `${data.btc.symbol} ${data.btc.usd}`;
+          priceResultEl.textContent = `${data.price.symbol} ${data.price.price}`;
           txHashEl.textContent = data.settlement.txHash;
           explorerLinkEl.textContent = data.settlement.explorerUrl;
           explorerLinkEl.href = data.settlement.explorerUrl;
