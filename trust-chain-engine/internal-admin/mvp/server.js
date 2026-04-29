@@ -90,13 +90,31 @@ function requireEnv() {
 }
 
 function json(res, status, payload) {
+  let body = payload;
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const hasUnifiedShape =
+      Object.prototype.hasOwnProperty.call(payload, "code") &&
+      Object.prototype.hasOwnProperty.call(payload, "message") &&
+      Object.prototype.hasOwnProperty.call(payload, "data");
+    if (!hasUnifiedShape) {
+      const ok = payload.ok !== false && status < 400;
+      const code = payload.code || (ok ? "OK" : "ERROR");
+      const message = payload.message || payload.error || (ok ? "success" : "error");
+      const data =
+        payload.data ??
+        Object.fromEntries(
+          Object.entries(payload).filter(([k]) => !["ok", "code", "message", "error"].includes(k))
+        );
+      body = { ok, code, message, data };
+    }
+  }
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": ALLOW_ORIGIN,
     "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   });
-  res.end(JSON.stringify(payload, null, 2));
+  res.end(JSON.stringify(body, null, 2));
 }
 
 function text(res, status, payload) {
