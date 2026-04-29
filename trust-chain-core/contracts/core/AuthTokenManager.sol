@@ -6,10 +6,9 @@ import {Types} from "../libraries/Types.sol";
 import {Errors} from "../libraries/Errors.sol";
 import {Events} from "../libraries/Events.sol";
 import {EIP712Auth} from "../libraries/EIP712Auth.sol";
+import {SignatureValidator} from "../libraries/SignatureValidator.sol";
 
 contract AuthTokenManager is IAuthTokenManager {
-    uint256 internal constant SECP256K1N_DIV_2 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
-
     mapping(bytes32 tokenId => Types.AuthToken) public authTokens;
     mapping(address owner => uint256) public ownerNonce;
     mapping(bytes32 digest => bool) public usedDigests;
@@ -110,10 +109,7 @@ contract AuthTokenManager is IAuthTokenManager {
 
         bytes32 digest = getAuthDigest(tokenId, agent, opType, amount, deadline);
         if (usedDigests[digest]) revert Errors.DigestAlreadyUsed();
-        if (uint256(s) > SECP256K1N_DIV_2) revert Errors.InvalidSignature();
-        if (v != 27 && v != 28) revert Errors.InvalidSignature();
-
-        address recovered = ecrecover(digest, v, r, s);
+        address recovered = SignatureValidator.recoverStrict(digest, v, r, s);
         if (recovered == address(0) || recovered != token.owner) revert Errors.InvalidSignature();
 
         usedDigests[digest] = true;

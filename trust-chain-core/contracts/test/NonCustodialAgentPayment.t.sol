@@ -430,7 +430,7 @@ contract NonCustodialAgentPaymentTest is Test {
         vm.prank(buyer);
         protocol.confirmBill(bill2);
         vm.prank(seller);
-        vm.expectRevert(NonCustodialAgentPayment.PolicyViolation.selector);
+        vm.expectRevert(NonCustodialAgentPayment.DisputeRateLimited.selector);
         protocol.disputeBill(bill2);
 
         vm.warp(block.timestamp + 1 hours + 1);

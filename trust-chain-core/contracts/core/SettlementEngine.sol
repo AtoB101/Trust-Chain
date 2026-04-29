@@ -6,12 +6,14 @@ import {IERC20} from "../interfaces/IERC20.sol";
 import {QuoteTypes} from "../libraries/QuoteTypes.sol";
 import {QuoteEIP712} from "../libraries/QuoteEIP712.sol";
 import {Errors} from "../libraries/Errors.sol";
+import {SignatureValidator} from "../libraries/SignatureValidator.sol";
 
 contract SettlementEngine is ISettlementEngine {
-    uint256 internal constant SECP256K1N_DIV_2 = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
-
     address public immutable admin;
     bool public paused;
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+    uint256 private _status = _NOT_ENTERED;
 
     mapping(address token => bool allowed) public tokenAllowed;
     mapping(address payer => uint256 nonce) public override nonces;
@@ -37,7 +39,7 @@ contract SettlementEngine is ISettlementEngine {
         );
     }
 
-    function submitSettlement(QuoteTypes.Quote calldata quote, uint8 v, bytes32 r, bytes32 s) external override {
+    function submitSettlement(QuoteTypes.Quote calldata quote, uint8 v, bytes32 r, bytes32 s) external override nonReentrant {
         _submitSettlement(quote, v, r, s);
     }
 
@@ -46,7 +48,7 @@ contract SettlementEngine is ISettlementEngine {
         uint8[] calldata vs,
         bytes32[] calldata rs,
         bytes32[] calldata ss
-    ) external override {
+    ) external override nonReentrant {
         uint256 length = quotes.length;
         if (length == 0 || length != vs.length || length != rs.length || length != ss.length) {
             revert Errors.InvalidBatchInput();
@@ -58,8 +60,6 @@ contract SettlementEngine is ISettlementEngine {
     }
 
     function _submitSettlement(QuoteTypes.Quote calldata quote, uint8 v, bytes32 r, bytes32 s) internal {
-        if (uint256(s) > SECP256K1N_DIV_2) revert Errors.InvalidSignature();
-        if (v != 27 && v != 28) revert Errors.InvalidSignature();
         if (paused) revert Errors.EnginePaused();
         if (!tokenAllowed[quote.token]) revert Errors.TokenNotAllowed();
         if (quote.payer == address(0) || quote.payee == address(0) || quote.amount == 0) revert Errors.InvalidAmount();
@@ -68,7 +68,7 @@ contract SettlementEngine is ISettlementEngine {
         if (nonces[quote.payer] != quote.nonce) revert Errors.InvalidNonce();
 
         bytes32 digest = getQuoteDigest(quote);
-        address recovered = ecrecover(digest, v, r, s);
+        address recovered = SignatureValidator.recoverStrict(digest, v, r, s);
         if (recovered == address(0) || recovered != quote.payer) revert Errors.InvalidSignature();
 
         emit SettlementSubmitted(quote.quoteId, quote.payer, quote.payee, quote.amount);
@@ -105,5 +105,12 @@ contract SettlementEngine is ISettlementEngine {
         if (msg.sender != admin) revert Errors.Unauthorized();
         paused = false;
         emit Unpaused(msg.sender);
+    }
+
+    modifier nonReentrant() {
+        if (_status == _ENTERED) revert Errors.InvalidState();
+        _status = _ENTERED;
+        _;
+        _status = _NOT_ENTERED;
     }
 }

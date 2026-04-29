@@ -10,6 +10,7 @@ contract KYARegistry is IKYARegistry {
     address public immutable admin;
     mapping(address agent => Types.AgentDID) public didByAgent;
     uint256 public constant MIN_STAKE = 0.01 ether;
+    bytes32 public constant DID_RENEW_SCOPE = keccak256("kya:did:renew");
 
     constructor() {
         admin = msg.sender;
@@ -24,6 +25,11 @@ contract KYARegistry is IKYARegistry {
         if (agent == address(0)) revert Errors.InvalidAddress();
         if (msg.value < MIN_STAKE) revert Errors.InvalidAmount();
         if (validityDays == 0) revert Errors.InvalidAmount();
+        Types.AgentDID memory existing = didByAgent[agent];
+        if (existing.isActive && existing.validUntil >= block.timestamp) {
+            if (existing.owner != msg.sender) revert Errors.Unauthorized();
+            if (permissionsHash != existing.permissionsHash && permissionsHash != DID_RENEW_SCOPE) revert Errors.InvalidState();
+        }
 
         uint256 validUntil = block.timestamp + (validityDays * 1 days);
         did = keccak256(abi.encodePacked(msg.sender, agent, block.timestamp, permissionsHash));

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {INonCustodialAgentPayment} from "../interfaces/INonCustodialAgentPayment.sol";
+import {SignatureValidator} from "../libraries/SignatureValidator.sol";
 
 interface IERC20Extended {
     function balanceOf(address account) external view returns (uint256);
@@ -74,8 +75,6 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
     uint256 private _status = _NOT_ENTERED;
-    uint256 internal constant SECP256K1N_DIV_2 =
-        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
     uint256 private constant SELLER_DISPUTE_COOLDOWN_SECONDS = 5 minutes;
     bytes32 private immutable _DOMAIN_SEPARATOR;
     bytes32 private constant _EIP712_DOMAIN_TYPEHASH =
@@ -270,8 +269,6 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     /// @param s Signature s.
     function confirmBillBySignature(uint256 billId, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external override {
         if (block.timestamp > deadline) revert SignatureExpired();
-        if (uint256(s) > SECP256K1N_DIV_2) revert InvalidSignature();
-        if (v != 27 && v != 28) revert InvalidSignature();
 
         Bill storage b = bills[billId];
         if (b.billId == 0) revert BillNotFound(billId);
@@ -282,7 +279,7 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
         uint256 nonce = confirmNonce[b.buyer];
         bytes32 structHash = keccak256(abi.encode(_CONFIRM_BILL_TYPEHASH, billId, nonce, deadline, msg.sender));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _DOMAIN_SEPARATOR, structHash));
-        address signer = ecrecover(digest, v, r, s);
+        address signer = SignatureValidator.recoverStrict(digest, v, r, s);
         if (signer == address(0)) revert InvalidSignature();
         if (signer != b.buyer) revert InvalidSignature();
 
