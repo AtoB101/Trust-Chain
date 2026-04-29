@@ -27,6 +27,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 mkdir -p "$RESULTS_DIR"
+cd "$ROOT_DIR"
 
 release_status="PASS"
 failed_stages=()
