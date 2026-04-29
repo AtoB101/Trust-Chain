@@ -1,4 +1,4 @@
-TrustChain 场景接入结果报告（OpenClaw + Hermes）
+Karma 场景接入结果报告（OpenClaw + Hermes）
 
 版本：v0.1
 日期：<YYYY-MM-DD>

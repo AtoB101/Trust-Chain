@@ -11,7 +11,7 @@ fi
 
 export $(grep -v '^#' .env | xargs)
 
-echo "Starting Trust-Chain P0 BTC paid API demo..."
+echo "Starting Karma P0 BTC paid API demo..."
 echo "Demo URL: http://127.0.0.1:${MVP_PORT:-8822}/"
 echo "API health: http://127.0.0.1:${MVP_PORT:-8822}/api/health"
 echo

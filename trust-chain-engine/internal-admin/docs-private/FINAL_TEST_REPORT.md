@@ -7,7 +7,7 @@ Status: PASSED
 
 - Report ID: `OC-V01-FTR-20260426-01`
 - Report Type: Final Deployment Test Report
-- Prepared By: TrustChain Engineering
+- Prepared By: Karma Engineering
 - Reviewed By: Pending
 - Approval Status: Approved for external sharing
 - Version: `1.1`

@@ -1,4 +1,4 @@
-# TrustChain Community Roadmap (12 Months)
+# Karma Community Roadmap (12 Months)
 
 ## Q1 - Foundation and Trust
 

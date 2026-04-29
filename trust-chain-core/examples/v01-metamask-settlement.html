@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TrustChain v0.1 wangcai Console</title>
+    <title>Karma v0.1 wangcai Console</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -210,7 +210,7 @@
     </style>
   </head>
   <body>
-    <h1>TrustChain v0.1 — wangcai Console</h1>
+    <h1>Karma v0.1 — wangcai Console</h1>
     <p>Only four steps. The right side is monitoring.</p>
 
     <div class="callout">
@@ -761,7 +761,7 @@
           proofType: "stable_chain_verification_proof_v1",
           proofVersion: "stable-proof-v1",
           generatedAt: new Date().toISOString(),
-          app: "TrustChain v0.1 wangcai Console",
+          app: "Karma v0.1 wangcai Console",
           traceId: state.sessionTraceId || "trace-unset",
           source: {
             fileName: imported.fileName || null,
@@ -812,7 +812,7 @@
         const payload = buildStableProofSigningPayload(proof);
         const digest = keccak256(toUtf8Bytes(payload));
         const walletAddress = await state.signer.getAddress();
-        const message = `TrustChain Stable Proof Digest:\n${digest}`;
+        const message = `Karma Stable Proof Digest:\n${digest}`;
         const signature = await state.signer.signMessage(message);
         const attestation = {
           standard: "eip191_signMessage",
@@ -849,7 +849,7 @@
           throw new Error("Proof JSON missing signature/attestation object.");
         }
         const digest = attestation.digest || attestation.proofDigest || null;
-        const message = attestation.message || (digest ? `TrustChain Stable Proof Digest:\n${digest}` : null);
+        const message = attestation.message || (digest ? `Karma Stable Proof Digest:\n${digest}` : null);
         const signatureValue = attestation.signature || attestation.value || null;
         const declaredSigner = attestation.signer || attestation.wallet || null;
         if (!digest || !message || !signatureValue || !declaredSigner) {
@@ -1334,7 +1334,7 @@
           schemaVersion: "evidence-v1",
           evidenceVersion: "evidence-v1",
           traceId: state.sessionTraceId,
-          app: "TrustChain v0.1 wangcai Console",
+          app: "Karma v0.1 wangcai Console",
           exportedAt: new Date().toISOString(),
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
           pageUrl: typeof location !== "undefined" ? location.href : null,
@@ -1883,7 +1883,7 @@
         };
         const net = await state.provider.getNetwork();
         const domain = {
-          name: "TrustChainSettlementEngine",
+          name: "KarmaSettlementEngine",
           version: "1",
           chainId: Number(net.chainId),
           verifyingContract: engineAddress,

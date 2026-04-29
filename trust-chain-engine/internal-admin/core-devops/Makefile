@@ -22,7 +22,7 @@ help:
 	@echo "  make agent-safety-guardian   # run end-to-end safety guardian (self-check + risk registry)"
 	@echo "  make guardian                # alias of agent-safety-guardian"
 	@echo "  make rule-gap-adversarial-sim # run rule-exploit adversarial simulation scenarios"
-	@echo "  make api-run                 # start TrustChain ecosystem API server on :8811"
+	@echo "  make api-run                 # start Karma ecosystem API server on :8811"
 	@echo "  make api-smoke               # run API smoke tests against local server"
 	@echo "  make commercialization-gate  # evaluate commercial readiness (MUST/SHOULD/CAN)"
 	@echo "  make release-readiness       # run full release gate chain (fail-fast)"
@@ -164,4 +164,4 @@ api-health:
 	@curl -fsS "http://127.0.0.1:8811/v1/health" >/dev/null && echo "API health: ok"
 
 api-contract:
-	@test -f openapi/trustchain-v1.yaml && echo "OpenAPI contract: openapi/trustchain-v1.yaml"
+	@test -f openapi/karma-v1.yaml && echo "OpenAPI contract: openapi/karma-v1.yaml"

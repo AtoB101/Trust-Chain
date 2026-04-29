@@ -1,4 +1,4 @@
-# TrustChain v0.1 审计附录（Non-Custodial）
+# Karma v0.1 审计附录（Non-Custodial）
 
 本文档用于第三方审计快速对齐本轮关键改动，聚焦两项优化：
 

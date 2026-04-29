@@ -1,6 +1,6 @@
 # Portal Go-Live Runbook V1
 
-Goal: launch the Trust-Chain portal in a runnable state for users.
+Goal: launch the Karma portal in a runnable state for users.
 
 ## 1) Start portal service
 

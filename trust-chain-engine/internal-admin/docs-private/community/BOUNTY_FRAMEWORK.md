@@ -1,4 +1,4 @@
-# TrustChain Bounty Framework v0.1
+# Karma Bounty Framework v0.1
 
 ## Goal
 

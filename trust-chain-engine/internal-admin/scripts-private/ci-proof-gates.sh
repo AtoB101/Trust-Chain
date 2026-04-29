@@ -60,7 +60,7 @@ cd "$ROOT_DIR"
 mkdir -p "$RESULTS_DIR"
 
 echo "==> [Gate 1/2] Evidence schema compatibility"
-EVIDENCE_INPUT="${DOCS_DIR}/samples/trustchain-evidence-sample-v1.json"
+EVIDENCE_INPUT="${DOCS_DIR}/samples/karma-evidence-sample-v1.json"
 ./scripts/validate-evidence-schema.sh --path "$EVIDENCE_INPUT" --format text
 
 if [[ "$SKIP_BUNDLE_GEN" -eq 0 ]]; then

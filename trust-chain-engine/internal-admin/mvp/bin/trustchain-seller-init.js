@@ -84,13 +84,13 @@ main().catch((e) => {
 
   writeFileSafe(
     path.join(out, "README.md"),
-    `# Trust-Chain Seller Starter
+    `# Karma Seller Starter
 
 ## Quick start
 
 1. Copy env:
    \`cp .env.example .env\`
-2. Start Trust-Chain gateway in another terminal.
+2. Start Karma gateway in another terminal.
 3. Run first paid call:
    \`node index.js BTCUSDT\`
 `

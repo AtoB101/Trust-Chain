@@ -6,7 +6,7 @@ PORT="${MVP_PORT:-8822}"
 HOST="${MVP_HOST:-0.0.0.0}"
 STATIC_DIR="${DASHBOARD_STATIC_DIR:-/workspace/trust-chain-core}"
 
-echo "[portal-live] starting Trust-Chain portal"
+echo "[portal-live] starting Karma portal"
 echo "[portal-live] host=${HOST} port=${PORT}"
 echo "[portal-live] static=${STATIC_DIR}"
 

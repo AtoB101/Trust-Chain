@@ -1,8 +1,8 @@
-# TrustChain Contributor Playbook
+# Karma Contributor Playbook
 
 ## Who This Is For
 
-Developers, designers, writers, reviewers, and ecosystem contributors who want to help build TrustChain.
+Developers, designers, writers, reviewers, and ecosystem contributors who want to help build Karma.
 
 ## How to Start
 

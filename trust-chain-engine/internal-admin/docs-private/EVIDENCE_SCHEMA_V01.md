@@ -1,4 +1,4 @@
-# TrustChain Evidence Schema v0.1 (Frozen for M1)
+# Karma Evidence Schema v0.1 (Frozen for M1)
 
 This document defines the **field contract** for exported diagnosis JSON in M1.
 The goal is to keep support/audit parsers stable while M2 adds new fields.

@@ -1,4 +1,4 @@
-# Trust-Chain MVP API Contract (v1)
+# Karma MVP API Contract (v1)
 
 Base paths:
 

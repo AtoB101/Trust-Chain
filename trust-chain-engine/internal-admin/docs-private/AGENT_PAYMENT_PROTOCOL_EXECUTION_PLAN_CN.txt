@@ -1,4 +1,4 @@
-TrustChain Agent 支付协议开发执行方案（中文）
+Karma Agent 支付协议开发执行方案（中文）
 
 版本：v1.1（已进入执行与联调）
 适用范围：非托管（钱包内锁仓）Agent-to-Agent 支付结算协议
@@ -14,7 +14,7 @@ TrustChain Agent 支付协议开发执行方案（中文）
 1. 项目定位（最终统一口径）
 ==================================================
 1) 定位：
-- TrustChain = Agent-to-Agent 非托管可验证支付结算协议（Protocol）
+- Karma = Agent-to-Agent 非托管可验证支付结算协议（Protocol）
 
 2) 非定位：
 - 不是钱包（Wallet）

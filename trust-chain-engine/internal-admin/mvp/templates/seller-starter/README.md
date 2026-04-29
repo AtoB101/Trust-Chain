@@ -1,4 +1,4 @@
-# Trust-Chain Seller Starter (Private)
+# Karma Seller Starter (Private)
 
 This starter helps API/tool authors monetize agent calls quickly.
 

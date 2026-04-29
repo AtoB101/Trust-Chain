@@ -7,7 +7,7 @@
 
 - 报告编号：`OC-V01-FTR-20260426-01`
 - 报告类型：最终部署测试报告
-- 编写团队：TrustChain Engineering
+- 编写团队：Karma Engineering
 - 复核状态：待补充
 - 审批状态：可对外/合作方共享
 - 文档版本：`1.1`

@@ -1,4 +1,4 @@
-# Trust-Chain Vertical Entry Strategy V1 (Private)
+# Karma Vertical Entry Strategy V1 (Private)
 
 Status: Draft for execution  
 Scope: Private strategy only (do not mirror to public repositories)
@@ -31,7 +31,7 @@ Why this wins now:
 1. Agent tool-calling is already standard behavior.
 2. Existing API payments (API key + monthly plan) do not match per-call automation.
 3. Real pain exists: no reliable micro-payment, weak trust, poor settlement transparency.
-4. Trust-Chain already fits: pre-authorization, post-delivery settlement, disputeability.
+4. Karma already fits: pre-authorization, post-delivery settlement, disputeability.
 
 Initial scenarios:
 

@@ -1,4 +1,4 @@
-OpenClaw Execution Brief - TrustChain Core Settlement MVP v0.1
+OpenClaw Execution Brief - Karma Core Settlement MVP v0.1
 
 Role:
 You are the deployment and testing executor. Your task is to deploy and validate ONLY the focused Core Settlement MVP flow in this repository.

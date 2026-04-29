@@ -19,7 +19,7 @@ This baseline is used to:
 1. reduce partner onboarding ambiguity
 2. align settlement and SLA expectations
 3. standardize dispute and liability handling
-4. protect Trust-Chain operational and legal boundaries
+4. protect Karma operational and legal boundaries
 
 ## 2. Partner profile and qualification
 
@@ -49,7 +49,7 @@ Required terms:
 Change policy:
 
 - pricing updates require advance notice window (default >= 7 days)
-- emergency pricing changes require explicit Trust-Chain approval
+- emergency pricing changes require explicit Karma approval
 
 ## 4. Settlement terms
 
@@ -86,9 +86,9 @@ Partner commitments:
 
 - process only required data for service delivery
 - avoid retaining unnecessary user identifiers
-- do not use Trust-Chain operational data outside agreed scope
+- do not use Karma operational data outside agreed scope
 
-Trust-Chain commitments:
+Karma commitments:
 
 - expose only minimum required call context
 - keep partner secrets outside public artifacts
@@ -102,7 +102,7 @@ Partner must provide:
 - incident acknowledgement SLA (default <= 15 minutes for Sev-1)
 - status update cadence during incident (default every 30 minutes)
 
-Trust-Chain may enforce:
+Karma may enforce:
 
 - temporary route disablement
 - settlement pause for undelivered calls
@@ -156,7 +156,7 @@ Partner must:
 - rotate credentials on schedule or incident trigger
 - prevent plaintext secret exposure in logs/artifacts
 
-Trust-Chain reserves right to:
+Karma reserves right to:
 
 - request security attestation summary
 - trigger emergency credential rotation on incident

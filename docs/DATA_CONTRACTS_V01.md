@@ -1,4 +1,4 @@
-# TrustChain Output Data Contracts V0.1
+# Karma Output Data Contracts V0.1
 
 ## Goal
 

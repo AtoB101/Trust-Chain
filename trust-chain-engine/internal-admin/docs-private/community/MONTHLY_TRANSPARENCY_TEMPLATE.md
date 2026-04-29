@@ -1,4 +1,4 @@
-# TrustChain Monthly Transparency Report Template
+# Karma Monthly Transparency Report Template
 
 ## Report Metadata
 

@@ -64,7 +64,7 @@ async function main() {
   const network = await provider.getNetwork();
 
   const domain = {
-    name: "TrustChainSettlementEngine",
+    name: "KarmaSettlementEngine",
     version: "1",
     chainId: Number(network.chainId),
     verifyingContract: engineAddress,

@@ -1,8 +1,8 @@
-# TrustChain Tokenomics Parameters v0.1
+# Karma Tokenomics Parameters v0.1
 
 ## 0) Scope
 
-This document defines executable parameter policy for TrustChain tokenomics v0.1:
+This document defines executable parameter policy for Karma tokenomics v0.1:
 
 - default values
 - who can change what

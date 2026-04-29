@@ -33,6 +33,15 @@ def json_dumps(data) -> bytes:
     return (json.dumps(data, ensure_ascii=True) + "\n").encode("utf-8")
 
 
+def normalize_path(raw_path: str) -> str:
+    # Canonicalize API paths so /v1/* and /api/v1/* are both accepted.
+    if raw_path.startswith("/api/v1/"):
+        return raw_path[len("/api") :]
+    if raw_path == "/api/v1":
+        return "/v1"
+    return raw_path
+
+
 class Handler(BaseHTTPRequestHandler):
     state: AppState = None
 
@@ -77,7 +86,7 @@ class Handler(BaseHTTPRequestHandler):
             return None
 
     def _require_auth(self) -> bool:
-        if self.path.startswith("/v1/health"):
+        if normalize_path(self.path).startswith("/v1/health"):
             return True
         if not self._auth_ok():
             self._error(401, "AUTH_UNAUTHORIZED", "Missing or invalid bearer token")
@@ -92,7 +101,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         parsed = urlparse(self.path)
-        path = parsed.path
+        path = normalize_path(parsed.path)
 
         if path == "/v1/health":
             self._send_json(200, {"status": "ok", "version": API_VERSION})
@@ -136,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         parsed = urlparse(self.path)
-        path = parsed.path
+        path = normalize_path(parsed.path)
         body = self._read_json_body()
         if body is None:
             self._error(400, "INVALID_JSON", "request body is not valid JSON")
@@ -269,7 +278,7 @@ def load_alerts_from_guardian(results_dir: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="TrustChain API server")
+    parser = argparse.ArgumentParser(description="Karma API server")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8811)
     parser.add_argument("--token", default=os.getenv("TRUSTCHAIN_API_TOKEN", "dev-token"))
@@ -300,7 +309,7 @@ def main():
 
     Handler.state = state
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"TrustChain API server running at http://{args.host}:{args.port} (token={args.token})")
+    print(f"Karma API server running at http://{args.host}:{args.port} (token={args.token})")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -1,4 +1,4 @@
-# TrustChain v0.1 Scope
+# Karma v0.1 Scope
 
 ## Objective
 

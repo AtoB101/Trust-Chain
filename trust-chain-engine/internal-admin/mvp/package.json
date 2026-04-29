@@ -1,7 +1,7 @@
 {
   "name": "mvp",
   "version": "1.0.0",
-  "description": "Trust-Chain private paid-price gateway toolkit",
+  "description": "Karma private paid-price gateway toolkit",
   "main": "trustchain-wrap-tool.js",
   "scripts": {
     "start": "node server.js",

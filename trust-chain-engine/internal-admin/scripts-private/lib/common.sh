@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Shared shell helpers for TrustChain scripts.
+# Shared shell helpers for Karma scripts.
 
 tc_root_dir() {
   local src="${BASH_SOURCE[0]}"

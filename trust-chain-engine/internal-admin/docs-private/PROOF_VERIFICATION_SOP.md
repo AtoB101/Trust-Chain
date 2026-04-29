@@ -1,7 +1,7 @@
 # Proof Verification SOP (Stable Settlement Evidence)
 
 This SOP defines a practical, repeatable workflow for generating, signing, and verifying
-stable-settlement proof artifacts in the TrustChain console.
+stable-settlement proof artifacts in the Karma console.
 
 Scope:
 - frontend file: `examples/v01-metamask-settlement.html`
@@ -23,7 +23,7 @@ Scope:
 1. Frontend console is running:
    - `http://127.0.0.1:8790/examples/v01-metamask-settlement.html`
 2. Browser wallet extension is available (for signing step).
-3. You have at least one exported diagnosis JSON file from TrustChain console.
+3. You have at least one exported diagnosis JSON file from Karma console.
 
 ## 3) End-to-end workflow
 
@@ -211,7 +211,7 @@ Optional policy controls for CI/ops:
 - `--require-recent-pass H`: fail when latest passing bundle is older than `H` hours (UTC).
 - CI gate wrapper:
   - `./scripts/ci-proof-gates.sh` runs:
-    1) evidence schema validation on `docs/samples/trustchain-evidence-sample-v1.json`
+    1) evidence schema validation on `docs/samples/karma-evidence-sample-v1.json`
     2) batch proof-index verification with strict policy profile (`--strict --max-fail 0 --min-total 1 --require-recent-pass 24`)
 - patrol profile wrapper (M4.2):
   - `./scripts/proof-patrol.sh --profile <strict|balanced|lenient>`

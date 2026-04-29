@@ -8,8 +8,8 @@ AI agents need to pay each other, but existing solutions either require custody 
 
 ## Website
 
-- Portal (test): https://atob101.github.io/Trust-Chain/
-- Coming soon + waitlist: https://atob101.github.io/Trust-Chain/coming-soon.html (Karma Coming Soon)
+- Portal (test): https://atob101.github.io/Karma/
+- Coming soon + waitlist: https://atob101.github.io/Karma/coming-soon.html (Karma Coming Soon)
 
 This public repository exposes the verifiable settlement protocol baseline:
 
@@ -87,7 +87,7 @@ It publishes `trust-chain-core/` as a portal site.
 
 After enabling Pages in repository settings, the portal test URL will be:
 
-- `https://<your-github-username>.github.io/Trust-Chain/`
+- `https://<your-github-username>.github.io/Karma/`
 
 For custom domain replacement later:
 

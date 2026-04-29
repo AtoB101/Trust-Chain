@@ -1,4 +1,4 @@
-# Trust-Chain Seller Outreach DM Templates (Private)
+# Karma Seller Outreach DM Templates (Private)
 
 Use these first-touch messages for seller segments.
 

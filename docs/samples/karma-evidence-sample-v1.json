@@ -3,7 +3,7 @@
   "schemaVersion": "evidence-v1",
   "evidenceVersion": "evidence-v1",
   "traceId": "trace-sample-m4-ci",
-  "app": "TrustChain v0.1 wangcai Console",
+  "app": "Karma v0.1 wangcai Console",
   "exportedAt": "2026-04-28T00:00:00Z",
   "network": {
     "chainId": "11155111",

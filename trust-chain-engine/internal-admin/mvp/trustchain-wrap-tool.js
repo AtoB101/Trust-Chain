@@ -2,7 +2,7 @@
 "use strict";
 
 /**
- * Minimal private wrapper to monetize agent tools via Trust-Chain paid endpoint.
+ * Minimal private wrapper to monetize agent tools via Karma paid endpoint.
  *
  * Usage pattern:
  *   const wrapped = wrapTool({

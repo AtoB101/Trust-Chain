@@ -1,8 +1,8 @@
-# TrustChain Tokenomics v0.1 (Draft)
+# Karma Tokenomics v0.1 (Draft)
 
 ## 0) Purpose
 
-This document defines a practical, ETH-style tokenomics baseline for TrustChain:
+This document defines a practical, ETH-style tokenomics baseline for Karma:
 
 - utility first, speculation second
 - transparent issuance and value sink
@@ -29,11 +29,11 @@ This is a product/economic design draft, not legal advice.
 
 ## 2) Token Utility (must-have)
 
-TrustChain token should have all three functions:
+Karma token should have all three functions:
 
 1. **Settlement fee utility**
    - users pay settlement fee in supported token mode
-   - paying in TrustChain token receives fee discount
+   - paying in Karma token receives fee discount
 
 2. **Staking and security utility**
    - operators/relayers stake tokens

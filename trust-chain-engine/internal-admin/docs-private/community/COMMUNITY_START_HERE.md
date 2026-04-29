@@ -1,10 +1,10 @@
-# TrustChain Community - Start Here
+# Karma Community - Start Here
 
 If you are new here, read this page first.
 
 ## 1) What We Are Building
 
-TrustChain is an open settlement protocol focused on verifiable execution, transparent incentives, and long-term network value.
+Karma is an open settlement protocol focused on verifiable execution, transparent incentives, and long-term network value.
 
 Core direction:
 

@@ -10,7 +10,7 @@ After enabling workflow + Pages, the portal is available at:
 
 For this repository example:
 
-- `https://atob101.github.io/Trust-Chain/`
+- `https://atob101.github.io/Karma/`
 
 ## 2. Publish Path
 

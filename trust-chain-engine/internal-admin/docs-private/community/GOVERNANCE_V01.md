@@ -1,4 +1,4 @@
-# TrustChain Governance v0.1
+# Karma Governance v0.1
 
 ## Objective
 

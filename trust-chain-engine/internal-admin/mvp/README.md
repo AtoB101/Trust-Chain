@@ -1,4 +1,4 @@
-# Trust-Chain P0 Paid Price API MVP (Private)
+# Karma P0 Paid Price API MVP (Private)
 
 Goal: prove real paid API settlement with one call.
 

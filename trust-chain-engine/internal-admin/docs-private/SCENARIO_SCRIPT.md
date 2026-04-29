@@ -1,4 +1,4 @@
-# TrustChain Demo Script
+# Karma Demo Script
 
 This script is designed for live demos, investor updates, and technical reviews.
 It maps directly to `contracts/test/ScenarioFlow.t.sol`.

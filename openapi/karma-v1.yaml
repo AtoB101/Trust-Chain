@@ -8,7 +8,7 @@ servers:
 security:
   - bearerAuth: []
 paths:
-  /v1/health:
+  /api/v1/health:
     get:
       summary: Health probe
       operationId: getHealth
@@ -27,7 +27,7 @@ paths:
                   version:
                     type: string
                 required: [status, version]
-  /v1/payment-intents:
+  /api/v1/payment-intents:
     post:
       summary: Create payment intent
       operationId: createPaymentIntent
@@ -56,7 +56,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-  /v1/payment-intents/{intentId}:
+  /api/v1/payment-intents/{intentId}:
     get:
       summary: Get payment intent
       operationId: getPaymentIntent
@@ -77,7 +77,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /v1/evidence/{evidenceId}:
+  /api/v1/evidence/{evidenceId}:
     get:
       summary: Get evidence by ID
       operationId: getEvidence
@@ -98,7 +98,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /v1/evidence/{evidenceId}/verify:
+  /api/v1/evidence/{evidenceId}/verify:
     post:
       summary: Verify evidence digest and schema marker
       operationId: verifyEvidence
@@ -127,7 +127,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /v1/risk/alerts:
+  /api/v1/risk/alerts:
     get:
       summary: List risk alerts
       operationId: listRiskAlerts

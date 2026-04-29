@@ -1,4 +1,4 @@
-# Trust-Chain Core/Engine Interface Compatibility Policy v1
+# Karma Core/Engine Interface Compatibility Policy v1
 
 ## Scope
 

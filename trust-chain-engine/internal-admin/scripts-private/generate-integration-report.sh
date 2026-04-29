@@ -74,7 +74,7 @@ nc205_yes = (
     and bool(chk(hermes, "sellerConsistent"))
 )
 
-content = f"""TrustChain 场景接入结果报告（OpenClaw + Hermes）
+content = f"""Karma 场景接入结果报告（OpenClaw + Hermes）
 
 版本：v0.1
 日期：{datetime.utcnow().strftime("%Y-%m-%d")}

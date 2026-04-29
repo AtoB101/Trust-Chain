@@ -176,7 +176,7 @@ deploy_exists="no"
 }
 EOF
   else
-    echo "=== TrustChain Doctor Report ==="
+    echo "=== Karma Doctor Report ==="
     echo "generated_at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
     echo "repo_root: ${ROOT_DIR}"
     echo "git_branch: $(git -C "$ROOT_DIR" branch --show-current 2>/dev/null || echo unknown)"

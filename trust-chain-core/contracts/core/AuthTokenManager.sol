@@ -16,7 +16,7 @@ contract AuthTokenManager is IAuthTokenManager {
 
     bytes32 internal constant EIP712_DOMAIN_TYPEHASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-    bytes32 internal constant NAME_HASH = keccak256("TrustChainAuth");
+    bytes32 internal constant NAME_HASH = keccak256("KarmaAuth");
     bytes32 internal constant VERSION_HASH = keccak256("1");
 
     bytes32 public immutable DOMAIN_SEPARATOR;

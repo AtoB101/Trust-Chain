@@ -12,7 +12,7 @@ Usage:
   ./start-ui.sh [--port <n>] [--host <ip>] [--open]
 
 Description:
-  Starts Trust-Chain public UI static server.
+  Starts Karma public UI static server.
   - Auto-selects a free port if --port is not provided.
   - Prints entry URLs for all major pages.
 
@@ -77,7 +77,7 @@ fi
 
 ENTRY="http://${HOST}:${PORT}/index.html"
 
-echo "Starting Trust-Chain public UI..."
+echo "Starting Karma public UI..."
 echo "Root: ${ROOT_DIR}"
 echo "Entry: ${ENTRY}"
 echo "Buyer: http://${HOST}:${PORT}/buyer/dashboard/"

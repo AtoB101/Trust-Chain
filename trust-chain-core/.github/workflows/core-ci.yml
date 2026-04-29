@@ -1,4 +1,4 @@
-name: Trust-Chain Core CI
+name: Karma Core CI
 
 on:
   pull_request:

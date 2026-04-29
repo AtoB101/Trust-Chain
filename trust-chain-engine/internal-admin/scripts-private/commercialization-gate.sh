@@ -94,7 +94,7 @@ ci_ok, ci_detail = run_ci_proof_gate()
 add_check(must_checks, "ci-proof-gates pass", ci_ok, ci_detail)
 add_check(must_checks, "guardian script present", check_script_exec("scripts/agent-safety-guardian.sh"), "scripts/agent-safety-guardian.sh")
 add_check(must_checks, "patrol script present", check_script_exec("scripts/proof-patrol.sh"), "scripts/proof-patrol.sh")
-add_check(must_checks, "openapi contract present", (root.parent.parent / "openapi" / "trustchain-v1.yaml").exists(), f"{root.parent.parent}/openapi/trustchain-v1.yaml")
+add_check(must_checks, "openapi contract present", (root.parent.parent / "openapi" / "karma-v1.yaml").exists(), f"{root.parent.parent}/openapi/karma-v1.yaml")
 add_check(must_checks, "api server present", check_script_exec("scripts/api_server.py"), "scripts/api_server.py")
 add_check(must_checks, "api smoke present", check_script_exec("scripts/api-smoke.sh"), "scripts/api-smoke.sh")
 

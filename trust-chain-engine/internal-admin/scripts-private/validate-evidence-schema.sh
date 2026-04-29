@@ -11,7 +11,7 @@ Usage:
   ./scripts/validate-evidence-schema.sh --path <json-file> [--format <text|json>]
 
 Description:
-  Validates TrustChain diagnosis evidence JSON for required schema markers
+  Validates Karma diagnosis evidence JSON for required schema markers
   and critical top-level/snapshot fields.
 
 Options:

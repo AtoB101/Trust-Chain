@@ -2,7 +2,7 @@
 
 This plan is designed for a non-technical founder with clear vision but limited resources.
 
-Goal: move TrustChain from solo MVP validation to a self-reinforcing builder community.
+Goal: move Karma from solo MVP validation to a self-reinforcing builder community.
 
 ## Rules of Execution
 

@@ -1,8 +1,8 @@
-# TrustChain Tokenomics — One Pager
+# Karma Tokenomics — One Pager
 
 ## Positioning
 
-TrustChain follows an ETH-style model: **utility-first, transparent economics, progressive decentralization**.
+Karma follows an ETH-style model: **utility-first, transparent economics, progressive decentralization**.
 
 The token is designed to power protocol usage and security, not short-term speculation.
 

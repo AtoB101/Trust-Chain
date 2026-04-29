@@ -1,4 +1,4 @@
-# TrustChain Community Docs Index
+# Karma Community Docs Index
 
 Use this page as the navigation hub for community building, governance, and incentives.
 

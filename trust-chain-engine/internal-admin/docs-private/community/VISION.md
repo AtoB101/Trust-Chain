@@ -1,4 +1,4 @@
-# TrustChain Community Vision
+# Karma Community Vision
 
 ## Mission
 
@@ -35,6 +35,6 @@ The community is the builder and growth engine:
 
 ## North Star (3 years)
 
-- TrustChain is the default open settlement layer for AI/API service transactions.
+- Karma is the default open settlement layer for AI/API service transactions.
 - Governance is community-led with transparent treasury and parameter controls.
 - Token value is backed by protocol usage, burn mechanics, and credible emission policy.

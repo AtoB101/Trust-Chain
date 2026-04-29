@@ -1,7 +1,7 @@
 # Portal Sync Acceptance Checklist V1
 
 ## Scope
-Validate Trust-Chain portal as synchronized entrypoint between frontend and backend APIs.
+Validate Karma portal as synchronized entrypoint between frontend and backend APIs.
 
 ## Pre-check
 - [ ] MVP server running on `:8822`

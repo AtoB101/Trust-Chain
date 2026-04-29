@@ -65,7 +65,7 @@ async function main() {
   };
 
   const domain = {
-    name: "TrustChainSettlementEngine",
+    name: "KarmaSettlementEngine",
     version: "1",
     chainId,
     verifyingContract: engineAddress,

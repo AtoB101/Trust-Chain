@@ -1,4 +1,4 @@
-# TrustChain MVP Checklist (Focused Narrative)
+# Karma MVP Checklist (Focused Narrative)
 
 This checklist aligns the MVP to one job:
 
