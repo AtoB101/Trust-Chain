@@ -35,6 +35,9 @@ python3 -m http.server 8787
 Open:
 `http://127.0.0.1:8787/examples/v01-metamask-settlement.html`
 
+Public P0 console entry:
+`http://127.0.0.1:8787/index.html`
+
 P0 public UI pages:
 
 - `http://127.0.0.1:8787/buyer/dashboard/`
