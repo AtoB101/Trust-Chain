@@ -18,6 +18,7 @@ const DEFAULT_SYMBOL = (process.env.DEFAULT_SYMBOL || "BTC/USDT").toUpperCase();
 const ALLOW_ORIGIN = process.env.ALLOW_ORIGIN || "*";
 const STATIC_ROOT =
   process.env.DASHBOARD_STATIC_DIR || path.resolve(__dirname, "../../../trust-chain-core");
+const API_PREFIX = "/api/v1";
 
 const dashboardState = {
   allowance: {
@@ -157,6 +158,18 @@ function contentTypeByExt(ext) {
     ".webp": "image/webp",
   };
   return map[ext] || "application/octet-stream";
+}
+
+function isApiPath(urlPath, routePath) {
+  const canonical = routePath.startsWith("/api/") ? routePath.slice(4) : routePath;
+  const legacyPath = routePath.startsWith("/api/") ? routePath : `/api${canonical}`;
+  const v1Path = `${API_PREFIX}${canonical}`;
+  return urlPath === legacyPath || urlPath === v1Path;
+}
+
+function getApiPath(routePath) {
+  const canonical = routePath.startsWith("/api/") ? routePath.slice(4) : routePath;
+  return `${API_PREFIX}${canonical}`;
 }
 
 function tryServeStaticFile(urlPath, res) {
@@ -348,7 +361,10 @@ async function main() {
         return;
       }
 
-      if (req.method === "GET" && (url.pathname === "/api/status" || url.pathname === "/api/health")) {
+      if (
+        req.method === "GET" &&
+        (isApiPath(url.pathname, "/api/status") || isApiPath(url.pathname, "/api/health"))
+      ) {
         const network = hasChain ? await provider.getNetwork() : { chainId: 0n };
         json(res, 200, {
           ok: true,
@@ -366,19 +382,19 @@ async function main() {
         return;
       }
 
-      if (req.method === "GET" && url.pathname === "/api/config") {
+      if (req.method === "GET" && isApiPath(url.pathname, "/api/config")) {
         json(res, 200, {
           ok: true,
           schemaVersion: "trustchain.mvp.config.v1",
           pricePerCallWei: CHARGE_WEI,
           pricePerCallEth: ethers.formatEther(CHARGE_WEI),
           defaultSymbol: DEFAULT_SYMBOL,
-          endpoint: "/api/price-paid",
+          endpoint: getApiPath("/api/price-paid"),
         });
         return;
       }
 
-      if (req.method === "GET" && url.pathname === "/api/dashboard") {
+      if (req.method === "GET" && isApiPath(url.pathname, "/api/dashboard")) {
         normalizeDashboardState();
         json(res, 200, {
           ok: true,
@@ -391,7 +407,7 @@ async function main() {
         return;
       }
 
-      if (req.method === "GET" && url.pathname === "/api/deploy-readiness") {
+      if (req.method === "GET" && isApiPath(url.pathname, "/api/deploy-readiness")) {
         const hasChain = chainEnabled();
         const checks = [
           { key: "api.dashboard", ok: true },
@@ -412,12 +428,12 @@ async function main() {
         return;
       }
 
-      if (req.method === "GET" && url.pathname === "/api/agents") {
+      if (req.method === "GET" && isApiPath(url.pathname, "/api/agents")) {
         json(res, 200, { ok: true, items: dashboardState.agents });
         return;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/agents") {
+      if (req.method === "POST" && isApiPath(url.pathname, "/api/agents")) {
         const body = await readJsonBody(req);
         const item = {
           id: `agent-${Date.now()}`,
@@ -447,7 +463,10 @@ async function main() {
         return;
       }
 
-      if (req.method === "PATCH" && /^\/api\/agents\/[^/]+$/.test(url.pathname)) {
+      if (
+        req.method === "PATCH" &&
+        (/^\/api\/agents\/[^/]+$/.test(url.pathname) || /^\/api\/v1\/api\/agents\/[^/]+$/.test(url.pathname))
+      ) {
         const agentId = url.pathname.split("/").pop();
         const body = await readJsonBody(req);
         let targetName = "Agent";
@@ -466,7 +485,10 @@ async function main() {
         return;
       }
 
-      if (req.method === "DELETE" && /^\/api\/agents\/[^/]+$/.test(url.pathname)) {
+      if (
+        req.method === "DELETE" &&
+        (/^\/api\/agents\/[^/]+$/.test(url.pathname) || /^\/api\/v1\/api\/agents\/[^/]+$/.test(url.pathname))
+      ) {
         const agentId = url.pathname.split("/").pop();
         let targetName = "Agent";
         dashboardState.agents = dashboardState.agents.filter((a) => {
@@ -483,17 +505,21 @@ async function main() {
         return;
       }
 
-      if (req.method === "GET" && url.pathname === "/api/bills") {
+      if (req.method === "GET" && isApiPath(url.pathname, "/api/bills")) {
         const status = url.searchParams.get("status");
         const items = status ? dashboardState.bills.filter((b) => b.status === status) : dashboardState.bills;
         json(res, 200, { ok: true, items });
         return;
       }
 
-      if (req.method === "POST" && /^\/api\/bills\/[^/]+\/(confirm|reject|settle|dispute)$/.test(url.pathname)) {
+      if (
+        req.method === "POST" &&
+        (/^\/api\/bills\/[^/]+\/(confirm|reject|settle|dispute)$/.test(url.pathname) ||
+          /^\/api\/v1\/api\/bills\/[^/]+\/(confirm|reject|settle|dispute)$/.test(url.pathname))
+      ) {
         const seg = url.pathname.split("/");
-        const billId = seg[3];
-        const action = seg[4];
+        const billId = seg[seg.length - 2];
+        const action = seg[seg.length - 1];
         let target = "PendingConfirm";
         if (action === "confirm") target = "PendingSettle";
         if (action === "reject" || action === "dispute") target = "Disputed";
@@ -516,7 +542,7 @@ async function main() {
         return;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/bills/batch-settle-now") {
+      if (req.method === "POST" && isApiPath(url.pathname, "/api/bills/batch-settle-now")) {
         let settled = 0;
         dashboardState.bills = dashboardState.bills.map((b) => {
           if (b.status === "PendingSettle" && b.payStrategy === "now") {
@@ -537,7 +563,7 @@ async function main() {
         return;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/bills/strategy") {
+      if (req.method === "POST" && isApiPath(url.pathname, "/api/bills/strategy")) {
         const body = await readJsonBody(req);
         dashboardState.bills = dashboardState.bills.map((b) =>
           b.id === body.billId ? { ...b, payStrategy: String(body.payStrategy || b.payStrategy) } : b
@@ -546,7 +572,7 @@ async function main() {
         return;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/allowance/stop") {
+      if (req.method === "POST" && isApiPath(url.pathname, "/api/allowance/stop")) {
         dashboardState.allowance.stopped = true;
         dashboardState.allowance.active = 0;
         pushActivity({
@@ -559,7 +585,7 @@ async function main() {
         return;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/allowance/increase") {
+      if (req.method === "POST" && isApiPath(url.pathname, "/api/allowance/increase")) {
         const body = await readJsonBody(req);
         const amount = Number(body.amount || 0);
         dashboardState.allowance.stopped = false;
@@ -575,7 +601,10 @@ async function main() {
         return;
       }
 
-      if (req.method === "POST" && (url.pathname === "/api/btc-price-paid" || url.pathname === "/api/price-paid")) {
+      if (
+        req.method === "POST" &&
+        (isApiPath(url.pathname, "/api/btc-price-paid") || isApiPath(url.pathname, "/api/price-paid"))
+      ) {
         if (!hasChain) {
           json(res, 503, {
             ok: false,

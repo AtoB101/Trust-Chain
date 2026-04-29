@@ -108,6 +108,7 @@
   <script>
     const titles = { dashboard: "Dashboard", receive: "收款区", pay: "付款区", bills: "账单记录", settings: "设置" };
     const API_BASE = new URLSearchParams(window.location.search).get('apiBase') || window.location.origin;
+    const API_PREFIX = "/api/v1";
     let state = null;
     let polling = null;
 
@@ -133,14 +134,15 @@
     }
 
     async function api(path, method='GET', body){
-      const r = await fetch(`${API_BASE}${path}`, {method, headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined});
+      const p = path.startsWith(API_PREFIX) ? path : `${API_PREFIX}${path}`;
+      const r = await fetch(`${API_BASE}${p}`, {method, headers:{'Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined});
       const j = await r.json();
       if(!r.ok || j.ok===false) throw new Error(j.message || j.error || `HTTP ${r.status}`);
       return j.data ?? j;
     }
 
     async function load(){
-      const d = await api('/api/dashboard');
+      const d = await api('/dashboard');
       state = d;
       render();
     }
@@ -173,18 +175,18 @@
     async function withAction(fn, okMsg){
       try{ await fn(); await load(); setStatus(okMsg || '操作成功', true);}catch(e){ setStatus('失败: '+e.message, false);} }
 
-    async function toggleAgent(id,status){ await withAction(()=>api(`/api/agents/${id}`,'PATCH',{status: status==='running'?'paused':'running'}),'Agent 状态已更新'); }
-    async function removeAgent(id){ await withAction(()=>api(`/api/agents/${id}`,'DELETE'),'Agent 已删除'); }
-    async function billAct(id,act){ await withAction(()=>api(`/api/bills/${id}/${act}`,'POST',{}),`账单 ${id} 已${act}`); }
+    async function toggleAgent(id,status){ await withAction(()=>api(`/agents/${id}`,'PATCH',{status: status==='running'?'paused':'running'}),'Agent 状态已更新'); }
+    async function removeAgent(id){ await withAction(()=>api(`/agents/${id}`,'DELETE'),'Agent 已删除'); }
+    async function billAct(id,act){ await withAction(()=>api(`/bills/${id}/${act}`,'POST',{}),`账单 ${id} 已${act}`); }
 
-    btnCreateAgent.onclick=()=>withAction(()=>api('/api/agents','POST',{name:rName.value||'NewAgent',description:rDesc.value||'',serviceType:rType.value||'自定义 API',endpoint:rEndpoint.value||'',price:Number(rPrice.value||0),token:rToken.value||'USDC',wallet:rWallet.value||'',successOnly:true,refundable:false,manualConfirm:false}),'收费 Agent 已创建');
+    btnCreateAgent.onclick=()=>withAction(()=>api('/agents','POST',{name:rName.value||'NewAgent',description:rDesc.value||'',serviceType:rType.value||'自定义 API',endpoint:rEndpoint.value||'',price:Number(rPrice.value||0),token:rToken.value||'USDC',wallet:rWallet.value||'',successOnly:true,refundable:false,manualConfirm:false}),'收费 Agent 已创建');
     btnGenerateCode.onclick=()=>{ navigator.clipboard?.writeText(`trustchain.wrapTool({ endpoint: "${rEndpoint.value||'https://api.example.com'}", price: "${rPrice.value||'0.03'}", token: "${rToken.value||'USDC'}" })`); setStatus('接入代码已复制',true); };
-    btnIncAuth.onclick=()=>withAction(()=>api('/api/allowance/increase','POST',{amount:Number(pAllowance.value||10)}),'授权额度已增加');
-    btnStop.onclick=()=>withAction(()=>api('/api/allowance/stop','POST',{}),'已暂停 Agent 消费');
+    btnIncAuth.onclick=()=>withAction(()=>api('/allowance/increase','POST',{amount:Number(pAllowance.value||10)}),'授权额度已增加');
+    btnStop.onclick=()=>withAction(()=>api('/allowance/stop','POST',{}),'已暂停 Agent 消费');
     btnUnlock.onclick=()=>setStatus('已解锁未占用额度（模拟）', true);
-    btnBatchNow.onclick=()=>withAction(()=>api('/api/bills/batch-settle-now','POST',{}),'批量结算完成');
+    btnBatchNow.onclick=()=>withAction(()=>api('/bills/batch-settle-now','POST',{}),'批量结算完成');
     btnRefresh.onclick=()=>withAction(()=>load(),'已刷新');
-    btnStopAll.onclick=()=>withAction(()=>api('/api/allowance/stop','POST',{}),'已暂停所有 Agent 消费');
+    btnStopAll.onclick=()=>withAction(()=>api('/allowance/stop','POST',{}),'已暂停所有 Agent 消费');
 
     async function boot(){
       try{ await load(); setStatus('前后端同步正常'); }
