@@ -6,6 +6,9 @@ fuzzing, static analysis, and formal verification.
 Investor- and partner-facing one-page bilingual summary:
 `docs/SECURITY_SUMMARY_CN_EN.md`
 
+Go-live security exception and acceptance decisions:
+`docs/SECURITY_ACCEPTANCE_NOTES.md`
+
 ## Verification Matrix (Current Baseline)
 
 | Layer | Tool | Type | Status |
