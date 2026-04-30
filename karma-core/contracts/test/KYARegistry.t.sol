@@ -8,11 +8,13 @@ import {Errors} from "../libraries/Errors.sol";
 contract KYARegistryTest is Test {
     KYARegistry internal registry;
     address internal owner = address(0xABCD);
+    address internal attacker = address(0xDEAD);
     address internal agent = address(0xA11CE);
 
     function setUp() public {
         registry = new KYARegistry();
         vm.deal(owner, 1 ether);
+        vm.deal(attacker, 1 ether);
     }
 
     function testRegisterAndVerifyDID() public {
@@ -41,5 +43,28 @@ contract KYARegistryTest is Test {
         vm.prank(owner);
         vm.expectRevert(Errors.InvalidAmount.selector);
         registry.registerDID{value: 0.001 ether}(address(0x1), bytes32("p"), 1);
+    }
+
+    function testRegisterDIDRevertsWhenActiveOwnerDiffers() public {
+        vm.prank(owner);
+        registry.registerDID{value: 0.01 ether}(agent, keccak256("perm"), 30);
+
+        vm.prank(attacker);
+        vm.expectRevert(Errors.Unauthorized.selector);
+        registry.registerDID{value: 0.01 ether}(agent, keccak256("perm-attacker"), 30);
+    }
+
+    function testRegisterDIDAllowsRenewByOwner() public {
+        vm.prank(owner);
+        registry.registerDID{value: 0.01 ether}(agent, keccak256("perm"), 1);
+        vm.warp(block.timestamp + 1 hours);
+
+        vm.prank(owner);
+        registry.registerDID{value: 0.01 ether}(agent, keccak256("perm"), 30);
+
+        (bool ok, address ownerAddr, uint256 validUntil) = registry.verifyDID(agent);
+        assertTrue(ok);
+        assertEq(ownerAddr, owner);
+        assertGt(validUntil, block.timestamp + 25 days);
     }
 }

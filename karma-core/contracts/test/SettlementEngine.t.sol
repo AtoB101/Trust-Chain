@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {SettlementEngine} from "../core/SettlementEngine.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
+import {ReentrantERC20} from "./mocks/ReentrantERC20.sol";
 import {QuoteTypes} from "../libraries/QuoteTypes.sol";
 import {Errors} from "../libraries/Errors.sol";
 
@@ -145,11 +146,8 @@ contract SettlementEngineTest is Test {
             ss[1] = s2;
         }
 
-        uint256 payeeBefore = token.balanceOf(payee);
         engine.settleBatch(quotes, vs, rs, ss);
-        uint256 payeeAfter = token.balanceOf(payee);
-
-        assertEq(payeeAfter - payeeBefore, 350);
+        assertEq(token.balanceOf(payee), 350);
         assertEq(engine.nonces(payer), 2);
         assertTrue(engine.executedQuotes(id1));
         assertTrue(engine.executedQuotes(id2));
@@ -172,6 +170,66 @@ contract SettlementEngineTest is Test {
 
         vm.expectRevert(Errors.InvalidBatchInput.selector);
         engine.settleBatch(quotes, vs, rs, ss);
+    }
+
+    function testSettleBatchReentrancyBlocked() public {
+        ReentrantERC20 reentrantToken = new ReentrantERC20();
+        reentrantToken.mint(payer, 1_000_000);
+        vm.prank(payer);
+        reentrantToken.approve(address(engine), type(uint256).max);
+        vm.prank(admin);
+        engine.setTokenAllowed(address(reentrantToken), true);
+
+        QuoteTypes.Quote memory q1 = QuoteTypes.Quote({
+            quoteId: keccak256("reentrant-quote-1"),
+            payer: payer,
+            payee: payee,
+            token: address(reentrantToken),
+            amount: 100,
+            nonce: 0,
+            deadline: block.timestamp + 1 hours,
+            scopeHash: keccak256("scope")
+        });
+        QuoteTypes.Quote memory q2 = QuoteTypes.Quote({
+            quoteId: keccak256("reentrant-quote-2"),
+            payer: payer,
+            payee: payee,
+            token: address(reentrantToken),
+            amount: 200,
+            nonce: 1,
+            deadline: block.timestamp + 1 hours,
+            scopeHash: keccak256("scope")
+        });
+
+        (uint8 v1, bytes32 r1, bytes32 s1) = _signQuote(q1, payerPk);
+        (uint8 v2, bytes32 r2, bytes32 s2) = _signQuote(q2, payerPk);
+
+        QuoteTypes.Quote[] memory quotes = new QuoteTypes.Quote[](2);
+        quotes[0] = q1;
+        quotes[1] = q2;
+
+        uint8[] memory vs = new uint8[](2);
+        vs[0] = v1;
+        vs[1] = v2;
+
+        bytes32[] memory rs = new bytes32[](2);
+        rs[0] = r1;
+        rs[1] = r2;
+
+        bytes32[] memory ss = new bytes32[](2);
+        ss[0] = s1;
+        ss[1] = s2;
+
+        reentrantToken.armReenter(engine, q2, v2, r2, s2);
+
+        vm.expectRevert(Errors.InvalidState.selector);
+        engine.settleBatch(quotes, vs, rs, ss);
+    }
+
+    function testRejectsZeroRSValues() public {
+        QuoteTypes.Quote memory q = _buildQuote(100, 0, block.timestamp + 1 hours);
+        vm.expectRevert(Errors.InvalidSignature.selector);
+        engine.submitSettlement(q, 27, bytes32(0), bytes32(0));
     }
 
     function testHighSValueFails() public {
