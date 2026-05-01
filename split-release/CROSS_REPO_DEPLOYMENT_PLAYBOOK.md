@@ -48,15 +48,14 @@ Create `deployment-manifest.json` from template:
 
 ### Step 4: Validate manifest and lock alignment
 
-Run:
+Run in this repository:
 
 ```bash
-./split-release/validate-manifest.sh \
-  --manifest /path/to/deployment-manifest.json \
-  --core-lock /path/to/CORE_VERSION.lock
+./split-release/verify-cross-repo-manifest.sh \
+  /path/to/deployment-manifest.json
 ```
 
-This blocks release if required fields are missing or versions mismatch.
+This blocks release if required fields are missing or critical values are invalid.
 
 ### Step 5: Deploy sequence
 

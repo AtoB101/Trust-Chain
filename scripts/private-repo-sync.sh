@@ -64,12 +64,14 @@ timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 manifest_path="${output_dir}/manifest.txt"
 readme_path="${output_dir}/README.md"
 bootstrap_script="${output_dir}/bootstrap-private-repo.sh"
+karma2_template_dir="${output_dir}/karma2-template"
 
 if [[ "${dry_run}" -eq 1 ]]; then
   echo "DRY-RUN only. Would generate:"
   echo "  - ${manifest_path}"
   echo "  - ${readme_path}"
   echo "  - ${bootstrap_script}"
+  echo "  - ${karma2_template_dir}/ (copied from split-release/templates/karma2)"
   exit 0
 fi
 
@@ -123,5 +125,8 @@ echo "Now add internal assets from secure storage."
 EOF
 
 chmod +x "${bootstrap_script}"
+
+mkdir -p "${karma2_template_dir}"
+cp -R "${ROOT_DIR}/split-release/templates/karma2/." "${karma2_template_dir}/"
 
 echo "OK   Generated private migration package at: ${output_dir}"
