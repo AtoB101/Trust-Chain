@@ -24,6 +24,8 @@
     "coreChecksPassed": true,
     "engineChecksPassed": true,
     "crossRepoSmokePassed": true,
+    "interfaceCompatPassed": true,
+    "envSyncPassed": true,
     "operator": "release-operator",
     "notes": "Attach CI URLs and tx hashes."
   },

@@ -1,7 +1,7 @@
 # Karma2 -> Karma core compatibility lock
 CORE_REPO=AtoB101/Karma
 CORE_TAG=core-v1.0.0
-CORE_COMMIT=1234567
+CORE_COMMIT=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 CORE_CHAIN_ID=11155111
 CORE_OPENAPI_SPEC=openapi/karma-v1.yaml
 CORE_SETTLEMENT_ENGINE=0x0000000000000000000000000000000000000000
