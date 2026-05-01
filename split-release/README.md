@@ -5,6 +5,15 @@ This directory provides reproducible scripts to publish the split repositories:
 - Public repo: `karma-core`
 - Private repo: `karma-engine`
 
+## Cross-repo deployment operations
+
+For production deployment orchestration across public/private repositories:
+
+- Playbook: `split-release/CROSS_REPO_DEPLOYMENT_PLAYBOOK.md`
+- Core version lock template: `split-release/templates/core-version.lock.example`
+- Deployment manifest template: `split-release/templates/deployment-manifest.example.json`
+- Manifest validator: `split-release/verify-cross-repo-manifest.sh`
+
 ## 1) Prerequisites
 
 - `git` installed and authenticated
@@ -58,3 +67,23 @@ Scripts create isolated publish directories:
 - `.split-release-out/karma-engine-repo`
 
 These are temporary local repositories used only for clean publishing.
+
+## 6) Cross-repo deployment and private repo templates
+
+- Cross-repo playbook:
+  - `split-release/CROSS_REPO_DEPLOYMENT_PLAYBOOK.md`
+- Manifest validator:
+  - `split-release/verify-cross-repo-manifest.sh`
+- Public-side templates:
+  - `split-release/templates/core-version.lock.example`
+  - `split-release/templates/deployment-manifest.example.json`
+- Private (`Karma2`) alignment templates:
+  - `split-release/templates/karma2/CORE_VERSION.lock.example`
+  - `split-release/templates/karma2/deployment-manifest.json.example`
+  - `split-release/templates/karma2/README.md`
+
+To generate a copy package under `results/private-repo-sync/`:
+
+```bash
+./scripts/private-repo-sync.sh --private-repo-url https://github.com/AtoB101/Karma2.git
+```
