@@ -43,6 +43,8 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
 
     uint16 public constant BPS_DENOMINATOR = 10_000;
     uint256 public constant MAX_BATCH_SETTLE_SIZE = 200;
+    /// @dev ERC20.transferFrom(address,address,uint256) — fixed selector, avoids per-call keccak256.
+    bytes4 private constant TRANSFER_FROM_SELECTOR = 0x23b872dd;
     uint16 public immutable sellerBondBps;
     uint256 public immutable defaultBillTtlSeconds;
     address public immutable arbitrator;
@@ -200,6 +202,9 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
 
         uint256 finalDeadline = deadline == 0 ? block.timestamp + defaultBillTtlSeconds : deadline;
         if (finalDeadline <= block.timestamp) revert InvalidDeadline();
+        // Bill must not outlive buyer policy window (otherwise policy enforcement becomes ambiguous).
+        PolicyConfig memory polCfg = policyByOwner[msg.sender];
+        if (polCfg.enabled && finalDeadline > polCfg.validUntil) revert InvalidDeadline();
 
         AccountState storage buyerSt = accountStates[msg.sender][token];
         uint256 sellerBond = _sellerBond(amount);
@@ -788,7 +793,7 @@ contract NonCustodialAgentPayment is INonCustodialAgentPayment {
     function _safeTransferFrom(address token, address from, address to, uint256 amount) internal returns (bool) {
         if (amount == 0) return true;
         (bool success, bytes memory data) =
-            token.call(abi.encodeWithSelector(bytes4(keccak256("transferFrom(address,address,uint256)")), from, to, amount));
+            token.call(abi.encodeWithSelector(TRANSFER_FROM_SELECTOR, from, to, amount));
         if (!success) {
             if (data.length > 0) {
                 assembly {

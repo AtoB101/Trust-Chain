@@ -756,7 +756,8 @@ contract NonCustodialAgentPaymentTest is Test {
 
         vm.warp(block.timestamp + 1 days + 1);
         vm.prank(buyer);
-        protocol.createBill(seller, address(token), 4_000, keccak256("scope-policy-8"), "ipfs://proof-policy-8", block.timestamp + 1 days);
+        // Bill deadline must be <= policy validUntil (policy still valid for 1 more day after warp).
+        protocol.createBill(seller, address(token), 4_000, keccak256("scope-policy-8"), "ipfs://proof-policy-8", block.timestamp + 12 hours);
         (, uint256 spentDay1,, uint256 day1) = protocol.getPolicyUsage(buyer);
         assertEq(spentDay1, 4_000);
         assertGt(day1, day0);
