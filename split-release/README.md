@@ -101,3 +101,10 @@ To generate a compact bundle that Karma2-side agents can pull and apply:
   --core-commit 1111111111111111111111111111111111111111 \
   --out-dir results/karma2-sync-package
 ```
+
+The bundle also includes **read-only vendor snapshots** under `vendor/karma-public-sync/`:
+
+- `karma-engine/internal-admin/core-devops/foundry.toml`
+- `karma-core/contracts/core/NonCustodialAgentPayment.sol`
+
+Copy those into Karma2 when private engineers need local `forge` parity without checking out the whole public tree.

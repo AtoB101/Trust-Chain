@@ -35,6 +35,8 @@
 
 **验收**: `forge build` + `forge test` 全绿；`forge snapshot --diff` 在 CI 中与 `.gas-snapshot` 对齐。
 
+**同步到 Karma2**: 运行 `./split-release/prepare-karma2-sync-package.sh` 后，将包内 `vendor/karma-public-sync/` 一并复制到私有仓（与 `ops/release-sync/` 同级或置于其下），便于私有侧本地编译与对照；该目录为**只读快照**，真源仍以公开 `Karma` 为准。
+
 ---
 
 ## A2 CI 加固

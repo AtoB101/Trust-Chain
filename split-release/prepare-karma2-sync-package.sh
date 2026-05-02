@@ -28,6 +28,9 @@ Outputs:
   <out-dir>/templates/README.md
   <out-dir>/contracts/interfaces/*
   <out-dir>/internal-admin/core-devops/.env.example.template
+  <out-dir>/vendor/karma-public-sync/README.txt
+  <out-dir>/vendor/karma-public-sync/karma-engine/internal-admin/core-devops/foundry.toml
+  <out-dir>/vendor/karma-public-sync/karma-core/contracts/core/NonCustodialAgentPayment.sol
   <out-dir>/README.md
 EOF
 }
@@ -68,6 +71,8 @@ fi
 
 rm -rf "$out_dir"
 mkdir -p "$out_dir/openapi" "$out_dir/templates/workflows" "$out_dir/contracts/interfaces" "$out_dir/internal-admin/core-devops"
+mkdir -p "$out_dir/vendor/karma-public-sync/karma-engine/internal-admin/core-devops"
+mkdir -p "$out_dir/vendor/karma-public-sync/karma-core/contracts/core"
 
 cp "$ROOT_DIR/openapi/karma-v1.yaml" "$out_dir/openapi/karma-v1.yaml"
 cp "$ROOT_DIR/split-release/templates/karma2/CORE_VERSION.lock.example" "$out_dir/templates/CORE_VERSION.lock.example"
@@ -77,6 +82,20 @@ cp "$ROOT_DIR/split-release/templates/karma2/README.md" "$out_dir/templates/READ
 cp "$ROOT_DIR/split-release/templates/karma2/workflows/lockstep-sync-check.yml" "$out_dir/templates/workflows/lockstep-sync-check.yml"
 cp "$ROOT_DIR"/karma-core/contracts/interfaces/*.sol "$out_dir/contracts/interfaces/"
 cp "$ROOT_DIR/karma-engine/internal-admin/core-devops/.env.example.template" "$out_dir/internal-admin/core-devops/.env.example.template"
+cp "$ROOT_DIR/karma-engine/internal-admin/core-devops/foundry.toml" "$out_dir/vendor/karma-public-sync/karma-engine/internal-admin/core-devops/foundry.toml"
+cp "$ROOT_DIR/karma-core/contracts/core/NonCustodialAgentPayment.sol" "$out_dir/vendor/karma-public-sync/karma-core/contracts/core/NonCustodialAgentPayment.sol"
+cat > "$out_dir/vendor/karma-public-sync/README.txt" <<EOF
+Read-only snapshots from public Karma (commit ${core_commit}).
+
+Purpose:
+- Local forge build / review in Karma2 without guessing versions.
+- Do not edit these copies as the source of truth; change public Karma and re-run:
+    ./split-release/prepare-karma2-sync-package.sh
+
+Paths mirror the public monorepo:
+- karma-engine/internal-admin/core-devops/foundry.toml
+- karma-core/contracts/core/NonCustodialAgentPayment.sol
+EOF
 
 cat > "$out_dir/SYNC_METADATA.env" <<EOF
 CORE_REPO=${core_repo}
@@ -97,6 +116,7 @@ Keep the private repository aligned with the public core baseline:
 - API contract (`openapi/karma-v1.yaml`)
 - Solidity interface surface (`contracts/interfaces/*.sol`)
 - deployment/environment template (`internal-admin/core-devops/.env.example.template`)
+- **Vendor snapshots** (`vendor/karma-public-sync/...`): public `foundry.toml` (engine devops) + `NonCustodialAgentPayment.sol` for local tooling parity
 - cross-repo lock + manifest templates
 - CI drift guard workflow template
 
@@ -112,7 +132,8 @@ Keep the private repository aligned with the public core baseline:
 5. Install drift guard workflow:
    - `mkdir -p .github/workflows`
    - `cp templates/workflows/lockstep-sync-check.yml .github/workflows/lockstep-sync-check.yml`
-6. Commit lock/manifest/workflow in Karma2 and run private CI + smoke tests.
+6. (Optional) Copy `vendor/karma-public-sync/` into Karma2 under the same relative path (e.g. `ops/release-sync/vendor/karma-public-sync/`) so private engineers can `forge build` against pinned sources.
+7. Commit lock/manifest/workflow (+ vendor if used) in Karma2 and run private CI + smoke tests.
 EOF
 
 chmod +x "$out_dir/templates/verify-manifest.sh"
