@@ -27,25 +27,8 @@ fi
 
 fail=0
 
-# 1) Private paths should not include obvious secret material in text files.
-private_text_patterns='(PRIVATE KEY|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|x-access-token:|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,})'
-while IFS= read -r f; do
-  [[ -z "$f" ]] && continue
-  [[ ! -f "$f" ]] && continue
-  case "$f" in
-    karma-engine/*|karma-engine/internal-admin/*)
-      if file "$f" | rg -q "text"; then
-        if rg -n "$private_text_patterns" "$f" >/dev/null; then
-          echo "[visibility-guard][FAIL] suspected secret in private path file: $f"
-          fail=1
-        fi
-      fi
-      ;;
-  esac
-done <<< "$changed_files"
-
-# 2) Public area should not reference private-only docs/scripts directly.
-public_ref_forbidden='karma-engine/internal-admin/docs-private|karma-engine/internal-admin/scripts-private'
+# 1) Public area should not reference private-only docs/scripts directly.
+public_ref_forbidden='docs-private|scripts-private|examples-private'
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue
   [[ ! -f "$f" ]] && continue
@@ -61,7 +44,7 @@ while IFS= read -r f; do
   esac
 done <<< "$changed_files"
 
-# 3) Ensure naming and API conventions in changed files.
+# 2) Ensure naming and API conventions in changed files.
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue
   [[ ! -f "$f" ]] && continue

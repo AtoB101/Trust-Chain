@@ -31,7 +31,7 @@
 |----|------|
 | 根目录 `foundry.toml` | `solc_version = "0.8.28"`, `optimizer_runs = 1000`, `src = karma-core/contracts` |
 | `NonCustodialAgentPayment` `transferFrom` 选择器 | 常量 `TRANSFER_FROM_SELECTOR = 0x23b872dd` |
-| `karma-engine/.../core-devops/foundry.toml` | 与公开侧编译档位对齐（便于内部脚本） |
+| `split-release/sync-templates/engine-core-devops/foundry.toml` | 与公开合约编译档位对齐的**模板**（供同步包；完整引擎在私有仓） |
 
 **验收**: `forge build` + `forge test` 全绿；`forge snapshot --diff` 在 CI 中与 `.gas-snapshot` 对齐。
 

@@ -29,7 +29,7 @@ Outputs:
   <out-dir>/contracts/interfaces/*
   <out-dir>/internal-admin/core-devops/.env.example.template
   <out-dir>/vendor/karma-public-sync/README.txt
-  <out-dir>/vendor/karma-public-sync/karma-engine/internal-admin/core-devops/foundry.toml
+  <out-dir>/vendor/karma-public-sync/karma-engine/internal-admin/core-devops/foundry.toml  (from split-release/sync-templates)
   <out-dir>/vendor/karma-public-sync/karma-core/contracts/core/NonCustodialAgentPayment.sol
   <out-dir>/README.md
 EOF
@@ -72,6 +72,7 @@ fi
 rm -rf "$out_dir"
 mkdir -p "$out_dir/openapi" "$out_dir/templates/workflows" "$out_dir/contracts/interfaces" "$out_dir/internal-admin/core-devops"
 mkdir -p "$out_dir/vendor/karma-public-sync/karma-engine/internal-admin/core-devops"
+ENGINE_DEVOPS_TEMPLATES="${ROOT_DIR}/split-release/sync-templates/engine-core-devops"
 mkdir -p "$out_dir/vendor/karma-public-sync/karma-core/contracts/core"
 
 cp "$ROOT_DIR/openapi/karma-v1.yaml" "$out_dir/openapi/karma-v1.yaml"
@@ -81,8 +82,8 @@ cp "$ROOT_DIR/split-release/templates/karma2/verify-manifest.sh" "$out_dir/templ
 cp "$ROOT_DIR/split-release/templates/karma2/README.md" "$out_dir/templates/README.md"
 cp "$ROOT_DIR/split-release/templates/karma2/workflows/lockstep-sync-check.yml" "$out_dir/templates/workflows/lockstep-sync-check.yml"
 cp "$ROOT_DIR"/karma-core/contracts/interfaces/*.sol "$out_dir/contracts/interfaces/"
-cp "$ROOT_DIR/karma-engine/internal-admin/core-devops/.env.example.template" "$out_dir/internal-admin/core-devops/.env.example.template"
-cp "$ROOT_DIR/karma-engine/internal-admin/core-devops/foundry.toml" "$out_dir/vendor/karma-public-sync/karma-engine/internal-admin/core-devops/foundry.toml"
+cp "$ENGINE_DEVOPS_TEMPLATES/.env.example.template" "$out_dir/internal-admin/core-devops/.env.example.template"
+cp "$ENGINE_DEVOPS_TEMPLATES/foundry.toml" "$out_dir/vendor/karma-public-sync/karma-engine/internal-admin/core-devops/foundry.toml"
 cp "$ROOT_DIR/karma-core/contracts/core/NonCustodialAgentPayment.sol" "$out_dir/vendor/karma-public-sync/karma-core/contracts/core/NonCustodialAgentPayment.sol"
 cat > "$out_dir/vendor/karma-public-sync/README.txt" <<EOF
 Read-only snapshots from public Karma (commit ${core_commit}).
@@ -93,7 +94,7 @@ Purpose:
     ./split-release/prepare-karma2-sync-package.sh
 
 Paths mirror the public monorepo:
-- karma-engine/internal-admin/core-devops/foundry.toml
+- karma-engine/internal-admin/core-devops/foundry.toml (copied from split-release/sync-templates/engine-core-devops/)
 - karma-core/contracts/core/NonCustodialAgentPayment.sol
 EOF
 

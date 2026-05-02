@@ -1,27 +1,17 @@
-# Split Release Guide: karma-core + karma-engine
+# Split release and cross-repo sync (Karma public)
 
-This directory provides reproducible scripts to publish the split repositories:
+This directory contains tooling for the **public** Karma repository (`karma-core/`, `docs/`, `openapi/`, etc.).
 
-- Public repo: `karma-core`
-- Private repo: `karma-engine`
+The **private engine** (internal admin, outreach, strategy) is **not** stored in this public tree. It lives in a **private** repository (for example [Karma2](https://github.com/AtoB101/Karma2)).
 
-## Cross-repo deployment operations
-
-For production deployment orchestration across public/private repositories:
+## Cross-repo deployment
 
 - Playbook: `split-release/CROSS_REPO_DEPLOYMENT_PLAYBOOK.md`
-- Core version lock template: `split-release/templates/core-version.lock.example`
-- Deployment manifest template: `split-release/templates/deployment-manifest.example.json`
+- Core version lock (public template): `split-release/templates/core-version.lock.example`
+- Deployment manifest (public template): `split-release/templates/deployment-manifest.example.json`
 - Manifest validator: `split-release/verify-cross-repo-manifest.sh`
 
-## 1) Prerequisites
-
-- `git` installed and authenticated
-- create two empty remote repositories first:
-  - `karma-core` (public)
-  - `karma-engine` (private)
-
-## 2) Publish public core repository
+## Publish public core only
 
 ```bash
 ./split-release/publish-core.sh \
@@ -29,82 +19,31 @@ For production deployment orchestration across public/private repositories:
   --branch main
 ```
 
-Example:
+## Private engine
+
+`split-release/publish-engine.sh` is retained as a stub: the public repo no longer contains `karma-engine/`.  
+Use your private repo’s normal git workflow; sync public baselines into it with:
 
 ```bash
-./split-release/publish-core.sh \
-  --remote-url git@github.com:your-org/karma-core.git \
-  --branch main
+./split-release/prepare-karma2-sync-package.sh --out-dir results/karma2-sync-package
 ```
 
-## 3) Publish private engine repository
+## Engine devops templates (for sync bundles only)
 
-```bash
-./split-release/publish-engine.sh \
-  --remote-url <engine_remote_url> \
-  --branch main
-```
+- `split-release/sync-templates/engine-core-devops/` — `.env.example.template` and `foundry.toml` copies used by `prepare-karma2-sync-package.sh` (not a full engine tree).
 
-Example:
+## Karma2 alignment templates
 
-```bash
-./split-release/publish-engine.sh \
-  --remote-url git@github.com:your-org/karma-engine.git \
-  --branch main
-```
+- `split-release/templates/karma2/*` — lock, manifest, verify script, lockstep CI workflow.
 
-## 4) Security checklist before publishing
-
-- ensure no private key/API key/RPC key files are present
-- ensure `karma-core` contains no strategy/risk-scoring internals
-- ensure `karma-engine` remote visibility is private
-
-## 5) Output directories
-
-Scripts create isolated publish directories:
-
-- `.split-release-out/karma-core-repo`
-- `.split-release-out/karma-engine-repo`
-
-These are temporary local repositories used only for clean publishing.
-
-## 6) Cross-repo deployment and private repo templates
-
-- Cross-repo playbook:
-  - `split-release/CROSS_REPO_DEPLOYMENT_PLAYBOOK.md`
-- Manifest validator:
-  - `split-release/verify-cross-repo-manifest.sh`
-- Public-side templates:
-  - `split-release/templates/core-version.lock.example`
-  - `split-release/templates/deployment-manifest.example.json`
-- Private (`Karma2`) alignment templates:
-  - `split-release/templates/karma2/CORE_VERSION.lock.example`
-  - `split-release/templates/karma2/ENV_SYNC.example`
-  - `split-release/templates/karma2/deployment-manifest.json.example`
-  - `split-release/templates/karma2/verify-manifest.sh`
-  - `split-release/templates/karma2/workflows/lockstep-sync-check.yml`
-  - `split-release/templates/karma2/README.md`
-- Sync package generator (for Karma2 agents):
-  - `split-release/prepare-karma2-sync-package.sh`
-
-To generate a copy package under `results/private-repo-sync/`:
+## Generate a Karma2 sync package
 
 ```bash
 ./scripts/private-repo-sync.sh --private-repo-url https://github.com/AtoB101/Karma2.git
 ```
 
-To generate a compact bundle that Karma2-side agents can pull and apply:
-
 ```bash
-./split-release/prepare-karma2-sync-package.sh \
-  --core-tag core-v1.0.0 \
-  --core-commit 1111111111111111111111111111111111111111 \
-  --out-dir results/karma2-sync-package
+./split-release/prepare-karma2-sync-package.sh --out-dir results/karma2-sync-package
 ```
 
-The bundle also includes **read-only vendor snapshots** under `vendor/karma-public-sync/`:
-
-- `karma-engine/internal-admin/core-devops/foundry.toml`
-- `karma-core/contracts/core/NonCustodialAgentPayment.sol`
-
-Copy those into Karma2 when private engineers need local `forge` parity without checking out the whole public tree.
+The bundle includes **read-only vendor snapshots** under `vendor/karma-public-sync/` (public `foundry.toml` template path + `NonCustodialAgentPayment.sol`).

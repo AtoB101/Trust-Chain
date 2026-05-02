@@ -15,12 +15,9 @@ This document defines repository visibility boundaries and review ownership.
 - `CONVENTIONS.md`
 - `scripts/**` (public wrappers only)
 
-### Private domain (internal only)
+### Private domain (not in this public repository)
 
-- `karma-engine/internal-admin/**`
-- `karma-engine/docs/**`
-- `karma-engine/settlement-optimizer/examples-private/**`
-- `karma-engine/PRIVATE_MIGRATION_INVENTORY.md`
+Engine, internal admin, outreach, and strategy documents live in a **private** Git repository (for example Karma2). They are **not** tracked under this public monorepo path.
 
 ## 2) Boundary rules
 
@@ -39,8 +36,8 @@ This document defines repository visibility boundaries and review ownership.
 ## 3) Review policy
 
 - Changes under `karma-core/**`, `docs/**`, `openapi/**`, and root public docs should be reviewed as public-surface changes.
-- Changes under `karma-engine/internal-admin/**` must be reviewed as private/internal operational changes.
-- Cross-boundary PRs (both public and private touched) require both reviewers.
+- Changes that touch **private** repositories must follow the private repo’s review policy.
+- Cross-boundary releases (public core + private engine) use lock/manifest + `split-release/prepare-karma2-sync-package.sh`.
 
 ## 4) Automation
 

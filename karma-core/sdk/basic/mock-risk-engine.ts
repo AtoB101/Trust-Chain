@@ -6,7 +6,7 @@ import type {
 
 /**
  * Public mock implementation.
- * Real production logic is private and lives in karma-engine.
+ * Real production logic is private and lives in the private engine repository (not in this public tree).
  */
 export class MockRiskEngine implements RiskEngine {
   async check(_tx: TransactionContext): Promise<RiskCheckResult> {
