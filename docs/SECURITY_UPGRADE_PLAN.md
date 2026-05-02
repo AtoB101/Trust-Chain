@@ -1,8 +1,9 @@
-# 主网上线安全升级方案（SECURITY_UPGRADE_PLAN）
+# Karma Pay 主网上线安全升级方案（SECURITY_UPGRADE_PLAN）
 
 > **版本**: v1.0 | **日期**: 2026-05-02 | **状态**: 待执行  
+> **仓库**: [github.com/AtoB101/Karma](https://github.com/AtoB101/Karma)（public）/ [github.com/AtoB101/Karma2](https://github.com/AtoB101/Karma2)（private）  
 > **文档性质**: 技术部执行清单 + 验收方逐项签字  
-> **适用范围**: 主网部署前安全升级；与 `Karma`（公开）/ `Karma2`（私有）双仓联动一致
+> **适用范围**: Karma Pay 主网部署前安全升级；公开核心与私有引擎双仓联动一致
 
 ---
 
@@ -27,7 +28,7 @@
 
 ---
 
-# 主网上线安全升级方案（正文 v1.0）
+# Karma Pay 主网上线安全升级方案（正文 v1.0）
 
 ## 1. 执行摘要
 
@@ -202,7 +203,7 @@ Gnosis Safe 3/5
 
 ### P1-2: CircuitBreaker 阈值强制执行
 
-`humanApprovalThreshold` 目前设置了但从任何调用路径都不检查。
+`humanApprovalThreshold` 目前设置了但从任何调用路径都不检查 — **这是安全幻觉**（链上参数存在但永不生效）。
 
 `BillManager.createBill` 开头加:
 
@@ -258,22 +259,24 @@ function expireBill(uint256 billId) external override {
 bytes4 private constant TRANSFER_FROM_SELECTOR = 0x23b872dd;
 ```
 
+每次调用时不再重新计算 `keccak256`，省 gas。
+
 ---
 
 ## 3. 工程基础设施
 
 ### CI/CD 流水线
 
-本仓库使用多 workflow，与下列**单文件示例**等价整合即可（勿再使用旧名 `Trust-Chain`）:
+本仓库**当前**使用多 workflow（以仓库内文件为准），与单文件 `ci.yml` **等价整合**即可：
 
 - `/.github/workflows/forge-ci.yml` — 构建与测试
 - `/.github/workflows/security-ci.yml` — Foundry + Slither + release-readiness
 - `/.github/workflows/security-baseline-guard.yml`、`visibility-guard.yml` — 安全基线与可见性
 
-**参考模板**（需按实际路径 `karma-core/contracts` 调整 `target`）:
+**单文件合并示例（Karma Pay CI）** — 若合并为一条流水线，请将 `target` / `forge test -C` 指向 **`karma-core/contracts`**（本仓库合约根路径）：
 
 ```yaml
-name: Karma CI
+name: Karma Pay CI
 on:
   push:
     branches: [main, develop]
@@ -300,15 +303,16 @@ jobs:
           target: karma-core/contracts/
 ```
 
-### 静态分析（策略与门禁对齐）
+### 静态分析（门禁目标由验收签字）
 
 ```bash
-pip install slither-analyzer
-# 本仓库使用 scripts/slither-gate.sh 与 SECURITY_ACCEPTANCE_NOTES 对残余项做书面接受；主网门禁目标由技术部与验收方共同签字。
-slither . --fail-high
+pip install slither-analyzer aderyn
+# 目标：主网前与验收方约定为「零 high」或书面接受项（见 docs/SECURITY_ACCEPTANCE_NOTES.md）
+slither karma-core/contracts --fail-high
+aderyn karma-core/contracts
 ```
 
-可选: `aderyn` 等补充工具，纳入私有 CI 或定期任务。
+可选: 将 `aderyn` 纳入 Karma2 私有 CI 定期任务，与公开仓 Slither 策略互补。
 
 ---
 
@@ -321,16 +325,20 @@ forge build --force || exit 1
 forge test -C karma-core/contracts -vvv || exit 1
 forge test -C karma-core/contracts --match-contract Invariant -vvv || exit 1
 forge snapshot --diff
-# Slither 与仓库脚本策略一致
-# 部署后
+# 与仓库门禁对齐（或直接用 scripts/slither-gate.sh）
+slither karma-core/contracts --fail-high || exit 1
+
+# 部署后必须验证
 BYTECODE_HASH=$(cast code --rpc-url $RPC_URL $CONTRACT_ADDRESS | cast keccak)
 cast call $CONTRACT_ADDRESS "owner()(address)" --rpc-url $RPC_URL
 cast call $CONTRACT_ADDRESS "DOMAIN_SEPARATOR()(bytes32)" --rpc-url $RPC_URL
 ```
 
-### 部署脚本加固
+### 部署脚本要求
 
-使用环境变量 / `cast` 读取敏感配置（禁止硬编码私钥）；所有 admin 参数传**多签地址**。
+- 使用 `vm.envUint` / 环境变量读私钥与 RPC，**禁止硬编码**
+- 所有 `admin` / `owner` / `arbitrator` 参数传 **Gnosis Safe 多签地址**
+- 部署后自动输出 **bytecode hash**（与链上 `cast code` 结果对照）供归档
 
 ---
 
@@ -338,13 +346,13 @@ cast call $CONTRACT_ADDRESS "DOMAIN_SEPARATOR()(bytes32)" --rpc-url $RPC_URL
 
 ### 关键事件告警阈值
 
-| 事件 | 告警阈值 |
-|------|---------|
-| GlobalCircuitBreakerTriggered | 即时 |
-| BatchCircuitBreakerUpdated (paused=true) | 即时 |
-| BillDisputed (seller 发起) | >5/小时 |
-| BillSplitResolved | >3/天 |
-| InvalidTransferIntent | >10/小时 |
+| 事件 | 告警阈值 | 响应 |
+|------|---------|------|
+| GlobalCircuitBreakerTriggered | 即时 | 🔴 紧急 |
+| BatchCircuitBreakerUpdated (paused=true) | 即时 | 🔴 紧急 |
+| BillDisputed (seller 发起) | >5/小时 | 🟡 检查 |
+| BillSplitResolved | >3/天 | 🟡 检查 |
+| InvalidTransferIntent | >10/小时 | 🟡 检查攻击 |
 
 ### 余额与一致性（在现有 fund-flow-monitor 基础上加）
 
@@ -357,10 +365,10 @@ cast call $CONTRACT_ADDRESS "DOMAIN_SEPARATOR()(bytes32)" --rpc-url $RPC_URL
 
 ## 6. 应急响应预案
 
-| 级别 | 定义 | 响应 | 动作 |
-|------|------|------|------|
+| 级别 | 定义 | 响应时间 | 动作 |
+|------|------|---------|------|
 | 🟢 L3 | 异常无资金风险 | 24h | 记录评估 |
-| 🟡 L2 | 可疑小额风险 | 4h | 分析+暂停相关功能 |
+| 🟡 L2 | 可疑小额风险 | 4h | 分析 + 暂停相关功能 |
 | 🟠 L1 | 确认攻击中等损失 | 30min | 触发 CB + 通知社区 |
 | 🔴 L0 | 大规模资金损失 | 即时 | GlobalPause + 多签紧急 + 公开披露 |
 
@@ -451,7 +459,7 @@ Week 4+: P2/P3 迭代 → 压力测试 → 社区披露
 **技术部回传模板**（PR 或邮件）:
 
 ```
-SECURITY_UPGRADE_PLAN v1.0 执行结果
+Karma Pay SECURITY_UPGRADE_PLAN v1.0 执行结果
 
 栈: BM / NC / 双栈
 P0: PR #___ 命令输出摘要 ___
